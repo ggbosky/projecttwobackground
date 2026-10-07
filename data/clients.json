@@ -1,0 +1,663 @@
+[
+  {
+    "id": "c1",
+    "company": "Kavárna Mlýnek s.r.o.",
+    "contactPerson": "Jana Horáková",
+    "contactRole": "Majitelka",
+    "email": "jana@kavarnamlynek.cz",
+    "phone": "+420 731 482 119",
+    "website": "kavarnamlynek.cz",
+    "industry": "Gastronomie",
+    "city": "Praha",
+    "status": "active",
+    "since": "2025-10-14",
+    "source": "Doporučení",
+    "owner": "t6",
+    "retainer": {
+      "monthly": 4900,
+      "since": "2026-01-01",
+      "scope": "Správa Webflow, drobné úpravy, hosting"
+    },
+    "personality": "Velmi vizuální typ, rozhoduje rychle a podle pocitu. Ocení moodboardy a ukázky víc než dlouhé specifikace.",
+    "notes": "Spokojená klientka, doporučila nás FitLabu. Druhý projekt (e-shop s kávou) běží. Pozor na sezónu – v prosinci minimum času.",
+    "tags": [
+      "VIP",
+      "Doporučuje nás"
+    ],
+    "communication": [
+      {
+        "date": "2026-10-02",
+        "type": "meeting",
+        "author": "t2",
+        "summary": "Review produktových fotek pro e-shop, schválena kategorie Zrnková káva."
+      },
+      {
+        "date": "2026-09-18",
+        "type": "email",
+        "author": "t6",
+        "summary": "Zaslán harmonogram e-shopu a seznam podkladů (texty, ceník, doprava)."
+      },
+      {
+        "date": "2026-08-27",
+        "type": "call",
+        "author": "t1",
+        "summary": "Podpis smlouvy na e-shop, záloha 40 % odsouhlasena."
+      },
+      {
+        "date": "2025-12-19",
+        "type": "note",
+        "author": "t6",
+        "summary": "Spuštění webu proběhlo bez problémů, klientka nadšená."
+      }
+    ]
+  },
+  {
+    "id": "c2",
+    "company": "FitLab Gym",
+    "contactPerson": "Ondřej Kučera",
+    "contactRole": "CEO",
+    "email": "ondrej@fitlab.cz",
+    "phone": "+420 602 551 870",
+    "website": "fitlab.cz",
+    "industry": "Fitness & wellness",
+    "city": "Brno",
+    "status": "active",
+    "since": "2025-12-01",
+    "source": "Doporučení (Kavárna Mlýnek)",
+    "owner": "t1",
+    "retainer": {
+      "monthly": 9500,
+      "since": "2026-06-01",
+      "scope": "SLA podpora rezervačního systému, monitoring, 6 h vývoje měsíčně"
+    },
+    "personality": "Datově orientovaný, chce čísla a KPI. Rychlé odpovědi, ale nemá rád překvapení v rozpočtu.",
+    "notes": "Strategický klient – 3 pobočky, plánují franšízu. Potenciál na další rozvoj aplikace a napojení na docházku.",
+    "tags": [
+      "Strategický",
+      "SLA"
+    ],
+    "communication": [
+      {
+        "date": "2026-10-05",
+        "type": "call",
+        "author": "t1",
+        "summary": "Sprint review PWA – push notifikace OK, přidat statistiky tréninků do backlogu."
+      },
+      {
+        "date": "2026-09-12",
+        "type": "meeting",
+        "author": "t6",
+        "summary": "Kvartální review SLA: dostupnost 99,96 %, 2 incidenty vyřešeny do 1 h."
+      },
+      {
+        "date": "2026-08-10",
+        "type": "email",
+        "author": "t1",
+        "summary": "Odeslána nabídka na členskou PWA aplikaci, schválena bez úprav."
+      }
+    ]
+  },
+  {
+    "id": "c3",
+    "company": "Advokátní kancelář Beneš & partneři",
+    "contactPerson": "JUDr. Pavel Beneš",
+    "contactRole": "Managing partner",
+    "email": "benes@ak-benes.cz",
+    "phone": "+420 224 318 900",
+    "website": "ak-benes.cz",
+    "industry": "Právní služby",
+    "city": "Praha",
+    "status": "active",
+    "since": "2026-01-08",
+    "source": "LinkedIn",
+    "owner": "t6",
+    "retainer": {
+      "monthly": 4500,
+      "since": "2026-04-01",
+      "scope": "Správa obsahu, zálohy, bezpečnostní aktualizace"
+    },
+    "personality": "Formální komunikace, vše chce písemně. Důraz na diskrétnost a přesnost textů.",
+    "notes": "Každý text prochází interním schválením – počítat s delšími cykly zpětné vazby (5–7 dní).",
+    "tags": [
+      "Formální"
+    ],
+    "communication": [
+      {
+        "date": "2026-10-01",
+        "type": "email",
+        "author": "t6",
+        "summary": "Zaslán náhled sekce Vzdělávání ke schválení, termín spuštění 16. 10."
+      },
+      {
+        "date": "2026-08-20",
+        "type": "meeting",
+        "author": "t2",
+        "summary": "Workshop k blogu a právním článkům, struktura kategorií odsouhlasena."
+      }
+    ]
+  },
+  {
+    "id": "c4",
+    "company": "Zahradnictví Zelený Ráj",
+    "contactPerson": "Lucie Marková",
+    "contactRole": "Marketing manažerka",
+    "email": "lucie.markova@zelenyraj.cz",
+    "phone": "+420 608 221 433",
+    "website": "zelenyraj.cz",
+    "industry": "Retail & e-commerce",
+    "city": "Olomouc",
+    "status": "active",
+    "since": "2026-01-20",
+    "source": "Google Ads",
+    "owner": "t1",
+    "retainer": {
+      "monthly": 7900,
+      "since": "2026-07-01",
+      "scope": "E-shop podpora, výkonnostní optimalizace, správa feedů"
+    },
+    "personality": "Proaktivní a organizovaná, ale rozhodnutí o rozpočtu dělá jednatel – počítat s eskalací.",
+    "notes": "B2B portál pozastaven do rozhodnutí o dotaci (OP TAK). E-shop roste +38 % YoY.",
+    "tags": [
+      "E-commerce",
+      "Dotace"
+    ],
+    "communication": [
+      {
+        "date": "2026-09-25",
+        "type": "call",
+        "author": "t1",
+        "summary": "Dotace stále v hodnocení, očekávané rozhodnutí v listopadu. B2B portál zůstává pozastaven."
+      },
+      {
+        "date": "2026-08-05",
+        "type": "email",
+        "author": "t6",
+        "summary": "Oznámení pozastavení B2B portálu, odsouhlasen stav fakturace."
+      },
+      {
+        "date": "2026-06-26",
+        "type": "meeting",
+        "author": "t2",
+        "summary": "Předávka e-shopu a školení administrace."
+      }
+    ]
+  },
+  {
+    "id": "c5",
+    "company": "Nordic Furniture CZ",
+    "contactPerson": "Erik Lindqvist",
+    "contactRole": "E-commerce Director",
+    "email": "erik@nordicfurniture.cz",
+    "phone": "+420 777 140 662",
+    "website": "nordicfurniture.cz",
+    "industry": "Nábytek & interiér",
+    "city": "Praha",
+    "status": "active",
+    "since": "2026-04-15",
+    "source": "Awwwards profil",
+    "owner": "t1",
+    "personality": "Komunikuje anglicky, preferuje asynchronní update ve Slacku. Vysoké nároky na detail a výkon.",
+    "notes": "Největší zakázka roku. Headless Shopify, 4 jazykové mutace. Klient zvažuje i retainer po spuštění.",
+    "tags": [
+      "Enterprise",
+      "EN"
+    ],
+    "communication": [
+      {
+        "date": "2026-10-06",
+        "type": "meeting",
+        "author": "t1",
+        "summary": "Demo košíku a checkoutu, Lighthouse 96. Připomínky k filtrům kategorií."
+      },
+      {
+        "date": "2026-09-22",
+        "type": "email",
+        "author": "t6",
+        "summary": "Fakturace 2. milníku (30 %) po dokončení katalogu."
+      },
+      {
+        "date": "2026-05-20",
+        "type": "meeting",
+        "author": "t2",
+        "summary": "Discovery workshop – persony, sitemap, design principy."
+      }
+    ]
+  },
+  {
+    "id": "c6",
+    "company": "Medicum Klinika",
+    "contactPerson": "MUDr. Hana Šimková",
+    "contactRole": "Ředitelka",
+    "email": "simkova@medicum-klinika.cz",
+    "phone": "+420 543 210 765",
+    "website": "medicum-klinika.cz",
+    "industry": "Zdravotnictví",
+    "city": "Brno",
+    "status": "active",
+    "since": "2026-03-10",
+    "source": "Poptávkový formulář",
+    "owner": "t6",
+    "retainer": {
+      "monthly": 6900,
+      "since": "2026-07-01",
+      "scope": "Správa webu, GDPR audit, aktualizace ordinačních hodin"
+    },
+    "personality": "Málo času, potřebuje stručná shrnutí. Důležitá je pro ni bezpečnost dat pacientů.",
+    "notes": "Online objednávkový systém musí splňovat GDPR a napojení na ambulantní software (API od dodavatele).",
+    "tags": [
+      "GDPR",
+      "Healthcare"
+    ],
+    "communication": [
+      {
+        "date": "2026-09-30",
+        "type": "call",
+        "author": "t1",
+        "summary": "Dodavatel ambulantního SW poslal API dokumentaci, začínáme integraci."
+      },
+      {
+        "date": "2026-09-01",
+        "type": "email",
+        "author": "t6",
+        "summary": "Podepsaná smlouva na objednávkový systém."
+      },
+      {
+        "date": "2026-06-12",
+        "type": "note",
+        "author": "t4",
+        "summary": "Web spuštěn, rozsah navýšen o 45 h kvůli vícejazyčnosti – nefakturováno."
+      }
+    ]
+  },
+  {
+    "id": "c7",
+    "company": "TechStart Brno",
+    "contactPerson": "Adam Polák",
+    "contactRole": "CTO",
+    "email": "adam@techstart.io",
+    "phone": "+420 720 333 908",
+    "website": "techstart.io",
+    "industry": "SaaS / Technologie",
+    "city": "Brno",
+    "status": "active",
+    "since": "2026-02-10",
+    "source": "Meetup Frontendisti",
+    "owner": "t1",
+    "retainer": {
+      "monthly": 14900,
+      "since": "2026-05-01",
+      "scope": "Vývojová kapacita 10 h/měs, správa marketing webu"
+    },
+    "personality": "Technicky zdatný, rád diskutuje architekturu. Oceňuje otevřenost a code review s jejich týmem.",
+    "notes": "Po seed kole (12 M Kč) – nejvyšší MRR. Dashboard pro zákazníky v Next.js, sdílené repo s jejich vývojáři.",
+    "tags": [
+      "Startup",
+      "Strategický"
+    ],
+    "communication": [
+      {
+        "date": "2026-10-03",
+        "type": "meeting",
+        "author": "t3",
+        "summary": "Architektura reportovacího modulu – rozhodnuto pro server actions + Postgres views."
+      },
+      {
+        "date": "2026-09-15",
+        "type": "call",
+        "author": "t1",
+        "summary": "Zvažují navýšení retaineru na 20 h/měs od ledna."
+      }
+    ]
+  },
+  {
+    "id": "c8",
+    "company": "Vinařství Pod Pálavou",
+    "contactPerson": "Michal Tesař",
+    "contactRole": "Jednatel",
+    "email": "michal@podpalavou.cz",
+    "phone": "+420 519 512 044",
+    "website": "podpalavou.cz",
+    "industry": "Vinařství",
+    "city": "Mikulov",
+    "status": "former",
+    "since": "2025-08-20",
+    "source": "Veletrh",
+    "owner": "t6",
+    "retainer": {
+      "monthly": 5500,
+      "since": "2026-02-01",
+      "until": "2026-08-31",
+      "scope": "Správa e-shopu"
+    },
+    "personality": "Přátelský, ale nerozhodný – změny zadání během projektu. Nutné pevné change requesty.",
+    "notes": "Retainer ukončen – správu převzal interní zaměstnanec. Vztah dobrý, možný návrat při redesignu.",
+    "tags": [
+      "Bývalý",
+      "Změny scope"
+    ],
+    "communication": [
+      {
+        "date": "2026-08-15",
+        "type": "email",
+        "author": "t6",
+        "summary": "Výpověď retaineru k 31. 8., předávací dokumentace odeslána."
+      },
+      {
+        "date": "2026-01-20",
+        "type": "meeting",
+        "author": "t1",
+        "summary": "Spuštění e-shopu, retrospektiva – rozšíření scope o 65 h."
+      }
+    ]
+  },
+  {
+    "id": "c9",
+    "company": "Stavby Kratochvíl a.s.",
+    "contactPerson": "Ing. Roman Kratochvíl",
+    "contactRole": "Obchodní ředitel",
+    "email": "kratochvil@stavby-kratochvil.cz",
+    "phone": "+420 585 123 777",
+    "website": "stavby-kratochvil.cz",
+    "industry": "Stavebnictví",
+    "city": "Olomouc",
+    "status": "former",
+    "since": "2025-09-01",
+    "source": "Doporučení",
+    "owner": "t1",
+    "retainer": {
+      "monthly": 3900,
+      "since": "2026-01-01",
+      "until": "2026-06-30",
+      "scope": "Správa webu a reference"
+    },
+    "personality": "Pragmatický, tlak na cenu. Rozhoduje podle ceny, ne podle kvality.",
+    "notes": "Klientský portál jsme prohráli s levnější konkurencí (−35 %). Prezentační web byl úspěch.",
+    "tags": [
+      "Cenově citlivý"
+    ],
+    "communication": [
+      {
+        "date": "2026-04-22",
+        "type": "email",
+        "author": "t1",
+        "summary": "Klient vybral jiného dodavatele portálu – důvodem cena."
+      },
+      {
+        "date": "2026-03-30",
+        "type": "meeting",
+        "author": "t1",
+        "summary": "Prezentace nabídky na klientský portál."
+      }
+    ]
+  },
+  {
+    "id": "c10",
+    "company": "Pekárna U Zlatého klasu",
+    "contactPerson": "Věra Dušková",
+    "contactRole": "Spolumajitelka",
+    "email": "vera@zlatyklas.cz",
+    "phone": "+420 604 909 312",
+    "website": "zlatyklas.cz",
+    "industry": "Gastronomie",
+    "city": "Plzeň",
+    "status": "former",
+    "since": "2025-10-28",
+    "source": "Facebook",
+    "owner": "t6",
+    "personality": "Nadšená, ale bez jasné představy. Rozpočet výrazně pod rozsahem, který očekávala.",
+    "notes": "Projekt zrušen po fázi designu – rozpočet neodpovídal rozsahu. Ponaučení: kvalifikovat budget už na prvním callu.",
+    "tags": [
+      "Zrušeno"
+    ],
+    "communication": [
+      {
+        "date": "2026-01-15",
+        "type": "call",
+        "author": "t6",
+        "summary": "Klientka ukončila spolupráci, záloha za design uhrazena."
+      },
+      {
+        "date": "2025-12-10",
+        "type": "meeting",
+        "author": "t2",
+        "summary": "Prezentace designu – pozitivní, ale klientka řeší nedostatek financí."
+      }
+    ]
+  },
+  {
+    "id": "c11",
+    "company": "EduSpark Academy",
+    "contactPerson": "Barbora Králová",
+    "contactRole": "Zakladatelka",
+    "email": "barbora@eduspark.cz",
+    "phone": "+420 739 004 551",
+    "website": "eduspark.cz",
+    "industry": "Vzdělávání",
+    "city": "Praha",
+    "status": "lead",
+    "since": "2026-09-02",
+    "source": "Webinář",
+    "owner": "t1",
+    "personality": "Vizionářka, myslí ve velkém. Potřebuje pomoct s prioritizací MVP.",
+    "notes": "Poptávka LMS platformy s předplatným. Zvažují i konkurenční řešení na míru (Teachable). Rozhodnutí do konce října.",
+    "tags": [
+      "Lead",
+      "Velká příležitost"
+    ],
+    "communication": [
+      {
+        "date": "2026-09-22",
+        "type": "email",
+        "author": "t1",
+        "summary": "Odeslána nabídka 980 000 Kč, MVP ve 2 fázích."
+      },
+      {
+        "date": "2026-09-09",
+        "type": "meeting",
+        "author": "t2",
+        "summary": "Discovery call – cíle, cílovka, monetizace přes předplatné."
+      }
+    ]
+  },
+  {
+    "id": "c12",
+    "company": "Hotel Panorama Šumava",
+    "contactPerson": "Jiří Vondráček",
+    "contactRole": "Provozní ředitel",
+    "email": "vondracek@panorama-sumava.cz",
+    "phone": "+420 388 412 600",
+    "website": "panorama-sumava.cz",
+    "industry": "Hotelnictví",
+    "city": "Železná Ruda",
+    "status": "lead",
+    "since": "2026-09-20",
+    "source": "Doporučení (Ateliér Forma)",
+    "owner": "t6",
+    "personality": "Konzervativní, chce vidět reference z oboru. Rozhoduje s majitelem hotelu.",
+    "notes": "Nový web + napojení na rezervační systém Previo. Silná vazba na sezónu – spuštění nejpozději v únoru.",
+    "tags": [
+      "Lead",
+      "Hospitality"
+    ],
+    "communication": [
+      {
+        "date": "2026-10-01",
+        "type": "email",
+        "author": "t6",
+        "summary": "Nabídka 290 000 Kč odeslána, follow-up domluven na 9. 10."
+      }
+    ]
+  },
+  {
+    "id": "c13",
+    "company": "Moda Bella Boutique",
+    "contactPerson": "Simona Bartošová",
+    "contactRole": "Majitelka",
+    "email": "simona@modabella.cz",
+    "phone": "+420 725 660 128",
+    "website": "modabella.cz",
+    "industry": "Móda",
+    "city": "Praha",
+    "status": "former",
+    "since": "2026-02-18",
+    "source": "Instagram",
+    "owner": "t6",
+    "personality": "Kreativní, ale chaotická komunikace – odpovědi trvaly i 2 týdny.",
+    "notes": "E-shop zrušen ve fázi vývoje, klientka přešla na marketplace (Zalando Partner). Fakturováno 30 %.",
+    "tags": [
+      "Zrušeno"
+    ],
+    "communication": [
+      {
+        "date": "2026-05-08",
+        "type": "email",
+        "author": "t6",
+        "summary": "Ukončení projektu dohodou, vyfakturována rozpracovanost."
+      },
+      {
+        "date": "2026-04-14",
+        "type": "call",
+        "author": "t1",
+        "summary": "Klientka zvažuje změnu strategie – projekt pozastaven."
+      }
+    ]
+  },
+  {
+    "id": "c14",
+    "company": "GreenEnergy Solutions",
+    "contactPerson": "Ing. Tereza Malá",
+    "contactRole": "Head of Marketing",
+    "email": "tereza.mala@greenenergy.cz",
+    "phone": "+420 255 700 890",
+    "website": "greenenergy.cz",
+    "industry": "Energetika",
+    "city": "Ostrava",
+    "status": "lead",
+    "since": "2026-09-10",
+    "source": "LinkedIn",
+    "owner": "t1",
+    "personality": "Analytická, porovnává 3 agentury. Klade důraz na výkon a měřitelnost konverzí.",
+    "notes": "Firemní web + kalkulačka úspor pro fotovoltaiku. Konkurence: 2 větší agentury.",
+    "tags": [
+      "Lead",
+      "Tender"
+    ],
+    "communication": [
+      {
+        "date": "2026-09-28",
+        "type": "meeting",
+        "author": "t1",
+        "summary": "Prezentace nabídky 420 000 Kč, kladný ohlas na prototyp kalkulačky."
+      }
+    ]
+  },
+  {
+    "id": "c15",
+    "company": "Ateliér Forma",
+    "contactPerson": "Ing. arch. David Hruška",
+    "contactRole": "Partner",
+    "email": "david@atelierforma.cz",
+    "phone": "+420 776 210 345",
+    "website": "atelierforma.cz",
+    "industry": "Architektura",
+    "city": "Praha",
+    "status": "active",
+    "since": "2026-04-02",
+    "source": "Awwwards profil",
+    "owner": "t2",
+    "retainer": {
+      "monthly": 4500,
+      "since": "2026-07-01",
+      "scope": "Správa portfolia a CMS"
+    },
+    "personality": "Estét, velký důraz na typografii a whitespace. Skvělá spolupráce s designem.",
+    "notes": "Web získal Awwwards Honorable Mention. Doporučil nás hotelu Panorama.",
+    "tags": [
+      "Reference",
+      "Doporučuje nás"
+    ],
+    "communication": [
+      {
+        "date": "2026-09-05",
+        "type": "email",
+        "author": "t2",
+        "summary": "Nové projekty do portfolia nahrány, poděkování za Awwwards."
+      },
+      {
+        "date": "2026-06-30",
+        "type": "meeting",
+        "author": "t2",
+        "summary": "Spuštění webu, předání CMS."
+      }
+    ]
+  },
+  {
+    "id": "c16",
+    "company": "Rychlík Autodíly s.r.o.",
+    "contactPerson": "Petr Rychlík",
+    "contactRole": "Jednatel",
+    "email": "petr@rychlik-autodily.cz",
+    "phone": "+420 603 118 245",
+    "website": "rychlik-autodily.cz",
+    "industry": "Automotive",
+    "city": "Pardubice",
+    "status": "lead",
+    "since": "2026-03-05",
+    "source": "Poptávkový formulář",
+    "owner": "t6",
+    "personality": "Rozhoduje čistě podle ceny, technické detaily ho nezajímají.",
+    "notes": "Nabídku na e-shop odmítl, zvolil krabicové řešení (Shoptet). Vrátit se k němu za rok, až narazí na limity platformy.",
+    "tags": [
+      "Cold lead",
+      "Cenově citlivý"
+    ],
+    "communication": [
+      {
+        "date": "2026-04-02",
+        "type": "email",
+        "author": "t6",
+        "summary": "Klient odmítl nabídku – volí Shoptet šablonu za zlomek ceny."
+      },
+      {
+        "date": "2026-03-12",
+        "type": "call",
+        "author": "t1",
+        "summary": "Úvodní call – 12 000 produktů, napojení na TecDoc katalog."
+      }
+    ]
+  },
+  {
+    "id": "c17",
+    "company": "Pivovar Hradní",
+    "contactPerson": "Martina Šebestová",
+    "contactRole": "Marketing",
+    "email": "martina@pivovarhradni.cz",
+    "phone": "+420 607 441 902",
+    "website": "pivovarhradni.cz",
+    "industry": "Gastronomie",
+    "city": "Kutná Hora",
+    "status": "lead",
+    "since": "2026-05-11",
+    "source": "Doporučení (Kavárna Mlýnek)",
+    "owner": "t6",
+    "personality": "Milá a otevřená, ale termíny diktuje majitel pivovaru.",
+    "notes": "Požadovali spuštění do 3 týdnů před pivními slavnostmi – nereálné. Domluveno, že se ozvou na podzim kvůli redesignu.",
+    "tags": [
+      "Follow-up Q4"
+    ],
+    "communication": [
+      {
+        "date": "2026-05-29",
+        "type": "email",
+        "author": "t6",
+        "summary": "Odmítnutí zakázky z naší strany – termín 3 týdny nereálný při zachování kvality."
+      },
+      {
+        "date": "2026-05-14",
+        "type": "meeting",
+        "author": "t2",
+        "summary": "Workshop – web + e-shop s pivními boxy."
+      }
+    ]
+  }
+]
