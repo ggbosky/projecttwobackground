@@ -1,5 +1,3 @@
-import { REFERENCE_DATE } from "./data";
-
 const czk = new Intl.NumberFormat("cs-CZ", {
   style: "currency",
   currency: "CZK",
@@ -46,12 +44,14 @@ export function parseDate(value: string): Date {
 
 /** 7. 10. 2026 */
 export function formatDate(value: string): string {
-  return dateFmt.format(parseDate(value));
+  const d = value ? parseDate(value) : null;
+  return d && !Number.isNaN(d.getTime()) ? dateFmt.format(d) : "—";
 }
 
 /** 7. říj */
 export function formatDateShort(value: string): string {
-  return dateShortFmt.format(parseDate(value));
+  const d = value ? parseDate(value) : null;
+  return d && !Number.isNaN(d.getTime()) ? dateShortFmt.format(d) : "—";
 }
 
 /** "2026-03" → "bře" */
@@ -64,8 +64,9 @@ export function formatMonthLong(month: string): string {
   return monthLongFmt.format(parseDate(`${month}-01`));
 }
 
-/** "před 3 h", "před 2 dny" – relativně k referenčnímu datu dema (nebo zadanému „teď“) */
-export function formatRelative(value: string, now: Date = REFERENCE_DATE): string {
+/** "před 3 h", "před 2 dny" – relativně k zadanému „teď“ */
+export function formatRelative(value: string, now: Date = new Date()): string {
+  if (!value || Number.isNaN(parseDate(value).getTime())) return "—";
   const diff = (now.getTime() - parseDate(value).getTime()) / 1000;
   const rtf = new Intl.RelativeTimeFormat("cs-CZ", { numeric: "auto" });
   if (Math.abs(diff) < 60) return "právě teď";
@@ -85,4 +86,26 @@ export function initials(name: string): string {
     .map((part) => part[0])
     .join("")
     .toUpperCase();
+}
+
+/** Dnešní datum jako YYYY-MM-DD (UTC) */
+export function isoDate(d: Date = new Date()): string {
+  return d.toISOString().slice(0, 10);
+}
+
+export function daysBetween(from: string | Date, to: string | Date): number {
+  const a = typeof from === "string" ? parseDate(from) : from;
+  const b = typeof to === "string" ? parseDate(to) : to;
+  return Math.round((b.getTime() - a.getTime()) / 864e5);
+}
+
+/** Česká množná čísla: plural(1, "faktura", "faktury", "faktur") */
+export function plural(n: number, one: string, few: string, many: string): string {
+  const abs = Math.abs(n);
+  const word = abs === 1 ? one : abs >= 2 && abs <= 4 ? few : many;
+  return `${n} ${word}`;
+}
+
+export function daysAgo(days: number): string {
+  return days === 0 ? "dnes" : days === 1 ? "včera" : `před ${days} dny`;
 }

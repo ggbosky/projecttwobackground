@@ -101,7 +101,7 @@ export function CapacityPlanner({ months, perTypeMonthlyHours }: { months: Plann
         <div className="mt-4 space-y-2 rounded-lg border border-line bg-surface p-3 text-xs">
           <Line label="Potřeba" value={formatHours(need)} />
           <Line label="Volná kapacita" value={formatHours(m.free)} />
-          <Line label="Rezerva (15 %)" value={formatHours(m.buffer)} />
+          <Line label="Rezerva" value={formatHours(m.buffer)} />
           <Line label="Vážená pipeline nabídek" value={formatHours(m.pipeline)} muted />
         </div>
 

@@ -91,7 +91,7 @@ export function CapacityChart({ data, height = 260 }: { data: CapacityRow[]; hei
         items={[
           { label: "Alokováno na projekty", color: "var(--series-1)" },
           { label: "Volná kapacita", color: "var(--series-3)" },
-          { label: "Rezerva 15 %", color: "var(--series-neutral)" },
+          { label: "Rezerva", color: "var(--series-neutral)" },
         ]}
       />
       <div style={{ height }}>

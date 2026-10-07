@@ -1,81 +1,63 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Building2, CornerDownLeft, FolderKanban, Search, User } from "lucide-react";
+import { ArrowDown, ArrowUp, Building2, CornerDownLeft, FolderKanban, Plus, Search, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import { clientName, clients, projects, team } from "@/lib/data";
-import { CLIENT_STATUS, PROJECT_STATUS } from "@/lib/status";
-import { NAV } from "./nav";
+import { NAV, SETTINGS_NAV } from "./nav";
 
-interface Item {
+export interface SearchItem {
   id: string;
-  group: string;
+  group: "Klienti" | "Projekty" | "Tým";
   label: string;
   hint: string;
   href: string;
-  icon: ReactNode;
   keywords: string;
+}
+
+interface Item extends Omit<SearchItem, "group"> {
+  group: string;
+  icon: ReactNode;
 }
 
 function normalize(s: string) {
   return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 }
 
-const ITEMS: Item[] = [
-  ...NAV.map((n) => {
+const GROUP_ICON: Record<SearchItem["group"], ReactNode> = {
+  Klienti: <Building2 size={15} />,
+  Projekty: <FolderKanban size={15} />,
+  Tým: <User size={15} />,
+};
+
+const STATIC_ITEMS: Item[] = [
+  { id: "new-client", group: "Akce", label: "Přidat klienta", hint: "Nový záznam v CRM", href: "/clients/new", icon: <Plus size={15} />, keywords: "novy klient pridat lead crm" },
+  { id: "new-project", group: "Akce", label: "Přidat projekt", hint: "Nová zakázka nebo nabídka", href: "/projects/new", icon: <Plus size={15} />, keywords: "novy projekt zakazka nabidka" },
+  ...[...NAV, SETTINGS_NAV].map((n) => {
     const Icon = n.icon;
-    return {
-      id: `nav-${n.href}`,
-      group: "Stránky",
-      label: n.label,
-      hint: n.description,
-      href: n.href,
-      icon: <Icon size={15} />,
-      keywords: `${n.label} ${n.description}`,
-    };
+    return { id: `nav-${n.href}`, group: "Stránky", label: n.label, hint: n.description, href: n.href, icon: <Icon size={15} />, keywords: `${n.label} ${n.description}` };
   }),
-  ...clients.map((c) => ({
-    id: c.id,
-    group: "Klienti",
-    label: c.company,
-    hint: `${c.contactPerson} · ${CLIENT_STATUS[c.status].label}`,
-    href: `/clients/${c.id}`,
-    icon: <Building2 size={15} />,
-    keywords: `${c.company} ${c.contactPerson} ${c.industry} ${c.email} ${c.city}`,
-  })),
-  ...projects.map((p) => ({
-    id: p.id,
-    group: "Projekty",
-    label: p.name,
-    hint: `${clientName(p.clientId)} · ${PROJECT_STATUS[p.status].label}`,
-    href: `/projects/${p.id}`,
-    icon: <FolderKanban size={15} />,
-    keywords: `${p.name} ${clientName(p.clientId)} ${p.stack.join(" ")} ${p.repo ?? ""}`,
-  })),
-  ...team.map((m) => ({
-    id: m.id,
-    group: "Tým",
-    label: m.name,
-    hint: m.role,
-    href: `/team#${m.id}`,
-    icon: <User size={15} />,
-    keywords: `${m.name} ${m.role} ${m.skills.join(" ")} ${m.github}`,
-  })),
 ];
 
-export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function CommandPalette({ open, onClose, items }: { open: boolean; onClose: () => void; items: SearchItem[] }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
+  const all = useMemo<Item[]>(
+    () => [...STATIC_ITEMS, ...items.map((i) => ({ ...i, icon: GROUP_ICON[i.group] }))],
+    [items],
+  );
+
   const results = useMemo(() => {
     const q = normalize(query.trim());
-    const list = q ? ITEMS.filter((i) => normalize(i.keywords).includes(q)) : ITEMS.filter((i) => i.group === "Stránky");
+    const list = q
+      ? all.filter((i) => normalize(`${i.label} ${i.keywords}`).includes(q))
+      : all.filter((i) => i.group === "Akce" || i.group === "Stránky");
     return list.slice(0, 40);
-  }, [query]);
+  }, [query, all]);
 
   useEffect(() => {
     if (open) {

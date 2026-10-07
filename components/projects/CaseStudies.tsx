@@ -8,14 +8,14 @@ import { FilterChip, Segmented, Select } from "@/components/ui/controls";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Stars } from "@/components/ui/Stars";
 import { cn } from "@/lib/cn";
-import { clientName, projects } from "@/lib/data";
 import { formatCZK, formatPercent } from "@/lib/format";
 import { WEB_TYPE, WEB_TYPE_ORDER } from "@/lib/status";
-import type { WebType } from "@/lib/types";
+import type { Project, WebType } from "@/lib/types";
 
 type Outcome = "all" | "won" | "failed";
 
-export function CaseStudies() {
+export function CaseStudies({ projects, clients }: { projects: Project[]; clients: { id: string; name: string }[] }) {
+  const clientName = (id: string) => clients.find((c) => c.id === id)?.name ?? "Smazaný klient";
   const [outcome, setOutcome] = useState<Outcome>("all");
   const [types, setTypes] = useState<WebType[]>([]);
   const [minRating, setMinRating] = useState("0");
@@ -30,9 +30,10 @@ export function CaseStudies() {
       .sort((a, b) => {
         if (sort === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
         if (sort === "price") return b.price - a.price;
-        return (b.actualEndDate ?? b.plannedEndDate).localeCompare(a.actualEndDate ?? a.plannedEndDate);
+        return (b.actualEndDate || b.plannedEndDate).localeCompare(a.actualEndDate || a.plannedEndDate);
       });
-  }, [outcome, types, minRating, sort]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outcome, types, minRating, sort, projects]);
 
   return (
     <div>
@@ -88,7 +89,7 @@ export function CaseStudies() {
           {list.map((p) => {
             const won = p.status === "completed";
             const hoursVar = p.estimatedHours ? p.actualHours / p.estimatedHours - 1 : 0;
-            const late = p.actualEndDate && p.actualEndDate > p.plannedEndDate;
+            const late = p.actualEndDate && p.plannedEndDate && p.actualEndDate > p.plannedEndDate;
             return (
               <Link
                 key={p.id}

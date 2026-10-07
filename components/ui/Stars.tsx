@@ -1,7 +1,7 @@
 import { Star } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-export function Stars({ value, size = 14, className }: { value?: number; size?: number; className?: string }) {
+export function Stars({ value, size = 14, className }: { value?: number | null; size?: number; className?: string }) {
   if (typeof value !== "number") return <span className="text-xs text-muted">Bez hodnocení</span>;
   return (
     <span className={cn("inline-flex items-center gap-0.5", className)} aria-label={`Hodnocení ${value} z 5`} title={`${value} / 5`}>

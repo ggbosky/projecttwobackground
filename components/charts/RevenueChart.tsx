@@ -26,7 +26,7 @@ function RevenueTooltip({ active, payload, mode }: TipProps & { mode: Mode }) {
       ? [
           { label: "Projekty", value: formatCZK(row.project), color: "var(--series-1)" },
           { label: "Retainery (MRR)", value: formatCZK(row.retainer), color: "var(--series-2)" },
-          { label: "Náklady", value: formatCZK(row.expenses), color: "var(--fg-2)" },
+          ...(row.expenses ? [{ label: "Náklady", value: formatCZK(row.expenses), color: "var(--fg-2)" }] : []),
           { label: "Obrat celkem", value: formatCZK(row.revenue), emphasis: true },
         ]
       : [
@@ -44,7 +44,17 @@ function RevenueTooltip({ active, payload, mode }: TipProps & { mode: Mode }) {
 }
 
 /** Příjmy po měsících: projekty + retainery (stacked) a náklady jako linka na stejné ose. */
-export function RevenueChart({ data, height = 300, showToggle = true }: { data: MonthRow[]; height?: number; showToggle?: boolean }) {
+export function RevenueChart({
+  data,
+  height = 300,
+  showToggle = true,
+  showExpenses = true,
+}: {
+  data: MonthRow[];
+  height?: number;
+  showToggle?: boolean;
+  showExpenses?: boolean;
+}) {
   const [mode, setMode] = useState<Mode>("revenue");
   const chartData = data.map((d) => ({
     ...d,
@@ -61,7 +71,7 @@ export function RevenueChart({ data, height = 300, showToggle = true }: { data: 
             items={[
               { label: "Projekty", color: "var(--series-1)" },
               { label: "Retainery", color: "var(--series-2)" },
-              { label: "Náklady", color: "var(--fg-2)", kind: "line" },
+              ...(showExpenses ? [{ label: "Náklady", color: "var(--fg-2)", kind: "line" as const }] : []),
             ]}
           />
         ) : (
@@ -95,7 +105,7 @@ export function RevenueChart({ data, height = 300, showToggle = true }: { data: 
               <>
                 <Bar dataKey="project" stackId="r" fill="var(--series-1)" stroke="var(--surface)" strokeWidth={1} maxBarSize={24} animationDuration={700} />
                 <Bar dataKey="retainer" stackId="r" fill="var(--series-2)" stroke="var(--surface)" strokeWidth={1} radius={[4, 4, 0, 0]} maxBarSize={24} animationDuration={700} />
-                <Line
+                {showExpenses && <Line
                   type="monotone"
                   dataKey="expenses"
                   stroke="var(--fg-2)"
@@ -103,7 +113,7 @@ export function RevenueChart({ data, height = 300, showToggle = true }: { data: 
                   strokeDasharray="0"
                   dot={false}
                   activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)", fill: "var(--fg-2)" }}
-                />
+                />}
               </>
             ) : (
               <>

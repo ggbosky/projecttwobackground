@@ -1,13 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import {
-  CLIENT_STATUS,
-  DEPLOY_STATE,
-  INVOICE_STATUS,
-  PROJECT_STATUS,
-  type Tone,
-} from "@/lib/status";
-import type { ClientStatus, DeployState, InvoiceStatus, ProjectStatus } from "@/lib/types";
+import { CLIENT_STATUS, INVOICE_STATUS, PRIORITY, PROJECT_STATUS, type Tone } from "@/lib/status";
+import type { ClientStatus, InvoiceStatus, Priority, ProjectStatus } from "@/lib/types";
 
 const TONE: Record<Tone, { badge: string; dot: string }> = {
   green: {
@@ -86,11 +80,11 @@ export function InvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
   return <Badge tone={meta.tone}>{meta.label}</Badge>;
 }
 
-export function DeployBadge({ state, provider }: { state: DeployState; provider?: string }) {
-  const meta = DEPLOY_STATE[state];
+export function PriorityBadge({ priority }: { priority: Priority }) {
+  const meta = PRIORITY[priority];
   return (
-    <Badge tone={meta.tone} pulse={state === "building"}>
-      {provider && state !== "none" ? `${provider} · ${meta.label}` : meta.label}
+    <Badge tone={meta.tone} dot={false}>
+      {meta.label}
     </Badge>
   );
 }

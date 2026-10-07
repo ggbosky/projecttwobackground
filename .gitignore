@@ -8,3 +8,6 @@ next-env.d.ts
 .DS_Store
 npm-debug.log*
 AGENTS.md
+
+# Lokální data aplikace (klienti, faktury, účty) – nikdy necommitovat
+.data/

@@ -1,19 +1,13 @@
-import {
-  REFERENCE_DATE,
-  REFERENCE_MONTH,
-  clients,
-  finance,
-  getMember,
-  invoices,
-  invoicesForProject,
-  projects,
-  team,
-} from "./data";
-import { parseDate } from "./format";
-import type { Client, Project, ProjectStatus, TeamMember, WebType } from "./types";
+import { isoDate, parseDate } from "./format";
+import type { Client, DataContext, Invoice, InvoiceStatus, Project, ProjectStatus, PublicUser, WebType } from "./types";
+
+/**
+ * Všechny výpočty KPI. Funkce jsou čisté – dostanou data (`DataContext`)
+ * a vrátí výsledek. Nic se nikam neodesílá.
+ */
 
 /* ------------------------------------------------------------------ */
-/* Pomocné funkce pro data a měsíce                                    */
+/* Měsíce a pracovní dny                                               */
 /* ------------------------------------------------------------------ */
 
 export function monthKey(date: Date): string {
@@ -25,8 +19,7 @@ export function addMonths(month: string, delta: number): string {
   return monthKey(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + delta, 1)));
 }
 
-/** Posledních `count` měsíců končících referenčním měsícem (vč.) */
-export function lastMonths(count: number, end = REFERENCE_MONTH): string[] {
+export function lastMonths(count: number, end: string): string[] {
   return Array.from({ length: count }, (_, i) => addMonths(end, i - count + 1));
 }
 
@@ -36,7 +29,6 @@ function monthBounds(month: string): [Date, Date] {
   return [start, end];
 }
 
-/** Počet pracovních dní (Po–Pá) v intervalu včetně krajních dní */
 export function workdaysBetween(from: Date, to: Date): number {
   const d = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate()));
   const end = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate()));
@@ -49,81 +41,78 @@ export function workdaysBetween(from: Date, to: Date): number {
   return count;
 }
 
+export const currentMonth = (ctx: DataContext) => monthKey(ctx.today);
+
 /* ------------------------------------------------------------------ */
-/* Stavy projektů                                                      */
+/* Lookupy                                                             */
 /* ------------------------------------------------------------------ */
 
-export const SIGNED_STATUSES: ProjectStatus[] = ["in_progress", "on_hold", "completed", "cancelled"];
-export const ACTIVE_STATUSES: ProjectStatus[] = ["in_progress", "on_hold"];
+export function clientName(ctx: DataContext, id: string): string {
+  return ctx.clients.find((c) => c.id === id)?.company ?? "Smazaný klient";
+}
 
-export const isSigned = (p: Project) => SIGNED_STATUSES.includes(p.status);
+export function memberById(ctx: DataContext, id: string): PublicUser | undefined {
+  return ctx.users.find((u) => u.id === id);
+}
+
+export function invoiceStatus(inv: Invoice, today: Date): InvoiceStatus {
+  if (inv.paid) return "paid";
+  return inv.dueDate < isoDate(today) ? "overdue" : "pending";
+}
+
+export const SIGNED: ProjectStatus[] = ["in_progress", "on_hold", "completed", "cancelled"];
+export const WON: ProjectStatus[] = ["in_progress", "on_hold", "completed"];
 
 /* ------------------------------------------------------------------ */
 /* Finance projektu                                                    */
 /* ------------------------------------------------------------------ */
 
-const AVG_HOURLY_COST = team.reduce((s, m) => s + m.hourlyCost, 0) / team.length;
-
-/** Vážená hodinová nákladová sazba týmu projektu */
-export function blendedHourlyCost(project: Project): number {
+export function blendedHourlyCost(ctx: DataContext, project: Project): number {
+  const fallback = ctx.users.length ? ctx.users.reduce((s, u) => s + u.hourlyCost, 0) / ctx.users.length : 0;
   const weights = project.team.filter((a) => a.hoursPerWeek > 0);
-  const totalWeight = weights.reduce((s, a) => s + a.hoursPerWeek, 0);
-  if (totalWeight === 0) {
-    const members = project.team.map((a) => getMember(a.memberId)).filter(Boolean) as TeamMember[];
-    return members.length ? members.reduce((s, m) => s + m.hourlyCost, 0) / members.length : AVG_HOURLY_COST;
+  const total = weights.reduce((s, a) => s + a.hoursPerWeek, 0);
+  if (total === 0) {
+    const members = project.team.map((a) => memberById(ctx, a.memberId)).filter(Boolean) as PublicUser[];
+    return members.length ? members.reduce((s, m) => s + m.hourlyCost, 0) / members.length : fallback;
   }
-  return (
-    weights.reduce((s, a) => s + (getMember(a.memberId)?.hourlyCost ?? AVG_HOURLY_COST) * a.hoursPerWeek, 0) /
-    totalWeight
-  );
+  return weights.reduce((s, a) => s + (memberById(ctx, a.memberId)?.hourlyCost ?? fallback) * a.hoursPerWeek, 0) / total;
 }
 
 export interface ProjectFinancials {
   invoiced: number;
   paid: number;
   remaining: number;
-  /** Příjem, se kterým počítáme (cena / vyfakturováno u zrušených) */
   revenue: number;
-  /** Náklady – skutečné, u běžících projektů odhad na konci projektu */
   cost: number;
   profit: number;
   margin: number;
-  /** Efektivní hodinovka = příjem / hodiny */
   effectiveRate: number;
-  /** Odhad hodin na konci projektu */
   forecastHours: number;
   hoursVariance: number;
   isProjection: boolean;
-  /** Skutečná vs. plánovaná délka ve dnech */
   plannedDays: number;
   actualDays?: number;
+  rate: number;
 }
 
-export function projectFinancials(project: Project): ProjectFinancials {
-  const projectInvoices = invoicesForProject(project.id);
-  const invoiced = projectInvoices.reduce((s, i) => s + i.amount, 0);
-  const paid = projectInvoices.filter((i) => i.status === "paid").reduce((s, i) => s + i.amount, 0);
-  const rate = blendedHourlyCost(project);
-
-  const isProjection = project.status === "in_progress" || project.status === "on_hold" || project.status === "proposal";
-  const revenue =
-    project.status === "cancelled" ? invoiced : project.status === "lost" ? 0 : project.price;
+export function projectFinancials(ctx: DataContext, project: Project): ProjectFinancials {
+  const invs = ctx.invoices.filter((i) => i.projectId === project.id);
+  const invoiced = invs.reduce((s, i) => s + i.amount, 0);
+  const paid = invs.filter((i) => i.paid).reduce((s, i) => s + i.amount, 0);
+  const rate = blendedHourlyCost(ctx, project);
+  const isProjection = ["in_progress", "on_hold", "proposal"].includes(project.status);
+  const revenue = project.status === "cancelled" ? invoiced : project.status === "lost" ? 0 : project.price;
 
   let forecastHours = project.actualHours;
   if (isProjection) {
-    // Odhad dokončení: lineární extrapolace podle progresu, minimálně plán
     const byProgress = project.progress > 10 ? project.actualHours / (project.progress / 100) : 0;
-    forecastHours = Math.max(project.estimatedHours, Math.round(byProgress));
+    forecastHours = Math.max(project.estimatedHours, Math.round(byProgress), project.actualHours);
   }
-
   const cost = forecastHours * rate + project.externalCosts;
   const profit = revenue - cost;
-  const plannedDays = Math.round(
-    (parseDate(project.plannedEndDate).getTime() - parseDate(project.startDate).getTime()) / 864e5,
-  );
-  const actualDays = project.actualEndDate
-    ? Math.round((parseDate(project.actualEndDate).getTime() - parseDate(project.startDate).getTime()) / 864e5)
-    : undefined;
+  const span = (a: string, b: string) => Math.round((parseDate(b).getTime() - parseDate(a).getTime()) / 864e5);
+  const plannedDays = project.startDate && project.plannedEndDate ? span(project.startDate, project.plannedEndDate) : 0;
+  const actualDays = project.startDate && project.actualEndDate ? span(project.startDate, project.actualEndDate) : undefined;
 
   return {
     invoiced,
@@ -139,6 +128,7 @@ export function projectFinancials(project: Project): ProjectFinancials {
     isProjection,
     plannedDays,
     actualDays,
+    rate,
   };
 }
 
@@ -146,15 +136,15 @@ export function projectFinancials(project: Project): ProjectFinancials {
 /* Příjmy, MRR, ARR                                                    */
 /* ------------------------------------------------------------------ */
 
-export function isRetainerActive(client: Client, at: Date = REFERENCE_DATE): boolean {
+export function isRetainerActive(client: Client, at: Date): boolean {
   const r = client.retainer;
-  if (!r) return false;
-  return parseDate(r.since) <= at && (!r.until || parseDate(r.until) >= at);
+  if (!r || !r.monthly || !r.since) return false;
+  const day = isoDate(at);
+  return r.since <= day && (!r.until || r.until >= day);
 }
 
-/** Měsíční opakovaný příjem z aktivních retainerů (správa, SLA, hosting) */
-export function currentMRR(at: Date = REFERENCE_DATE): number {
-  return clients.filter((c) => isRetainerActive(c, at)).reduce((s, c) => s + (c.retainer?.monthly ?? 0), 0);
+export function currentMRR(ctx: DataContext, at: Date = ctx.today): number {
+  return ctx.clients.filter((c) => isRetainerActive(c, at)).reduce((s, c) => s + (c.retainer?.monthly ?? 0), 0);
 }
 
 export interface MonthRow {
@@ -167,14 +157,15 @@ export interface MonthRow {
   mrr: number;
 }
 
-export function monthlySeries(count = 12, end = REFERENCE_MONTH): MonthRow[] {
-  return lastMonths(count, end).map((month) => {
-    const monthInvoices = invoices.filter((i) => i.issueDate.startsWith(month));
-    const project = monthInvoices.filter((i) => i.kind === "project").reduce((s, i) => s + i.amount, 0);
-    const retainer = monthInvoices.filter((i) => i.kind === "retainer").reduce((s, i) => s + i.amount, 0);
-    const e = finance.expenses.find((x) => x.month === month);
-    const expenses = e ? e.salaries + e.tools + e.marketing + e.office : 0;
-    const [, monthEnd] = monthBounds(month);
+export function monthlySeries(ctx: DataContext, count = 12, invoices: Invoice[] = ctx.invoices, withExpenses = true): MonthRow[] {
+  return lastMonths(count, currentMonth(ctx)).map((month) => {
+    const inMonth = invoices.filter((i) => i.issueDate.startsWith(month));
+    const retainer = inMonth.filter((i) => i.kind === "retainer").reduce((s, i) => s + i.amount, 0);
+    const project = inMonth.filter((i) => i.kind !== "retainer").reduce((s, i) => s + i.amount, 0);
+    const expenses = withExpenses
+      ? ctx.expenses.filter((e) => e.date.startsWith(month)).reduce((s, e) => s + e.amount, 0)
+      : 0;
+    const [, end] = monthBounds(month);
     return {
       month,
       project,
@@ -182,28 +173,19 @@ export function monthlySeries(count = 12, end = REFERENCE_MONTH): MonthRow[] {
       revenue: project + retainer,
       expenses,
       profit: project + retainer - expenses,
-      mrr: currentMRR(monthEnd),
+      mrr: currentMRR(ctx, end < ctx.today ? end : ctx.today),
     };
   });
 }
 
-export function revenueInMonth(month: string): number {
-  return invoices.filter((i) => i.issueDate.startsWith(month)).reduce((s, i) => s + i.amount, 0);
+export function revenueIn(ctx: DataContext, prefix: string): number {
+  return ctx.invoices.filter((i) => i.issueDate.startsWith(prefix)).reduce((s, i) => s + i.amount, 0);
 }
 
-export function revenueInYear(year: string): number {
-  return invoices.filter((i) => i.issueDate.startsWith(year)).reduce((s, i) => s + i.amount, 0);
-}
-
-/** Obrat za posledních 12 uzavřených měsíců */
-export function trailingTwelveMonths(): number {
-  const months = lastMonths(12, addMonths(REFERENCE_MONTH, -1));
-  return months.reduce((s, m) => s + revenueInMonth(m), 0);
-}
-
-export function receivables() {
-  const pending = invoices.filter((i) => i.status === "pending");
-  const overdue = invoices.filter((i) => i.status === "overdue");
+export function receivables(ctx: DataContext) {
+  const open = ctx.invoices.filter((i) => !i.paid);
+  const overdue = open.filter((i) => invoiceStatus(i, ctx.today) === "overdue");
+  const pending = open.filter((i) => invoiceStatus(i, ctx.today) === "pending");
   return {
     pending: pending.reduce((s, i) => s + i.amount, 0),
     overdue: overdue.reduce((s, i) => s + i.amount, 0),
@@ -213,58 +195,53 @@ export function receivables() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Pipeline & cashflow                                                 */
+/* Pipeline & úspěšnost                                                */
 /* ------------------------------------------------------------------ */
 
-export function pipelineSummary() {
-  const active = projects.filter((p) => ACTIVE_STATUSES.includes(p.status));
+export function pipelineSummary(ctx: DataContext) {
+  const active = ctx.projects.filter((p) => p.status === "in_progress" || p.status === "on_hold");
   const contracted = active.reduce((s, p) => s + p.price, 0);
-  const invoicedActive = active.reduce((s, p) => s + projectFinancials(p).invoiced, 0);
-  const proposals = projects.filter((p) => p.status === "proposal");
-  const proposalValue = proposals.reduce((s, p) => s + p.price, 0);
-  const weightedProposals = proposals.reduce((s, p) => s + p.price * (p.probability ?? 0), 0);
+  const invoicedActive = active.reduce((s, p) => s + projectFinancials(ctx, p).invoiced, 0);
+  const proposals = ctx.projects.filter((p) => p.status === "proposal");
   return {
     activeCount: active.length,
     contracted,
     invoicedActive,
-    toInvoice: contracted - invoicedActive,
+    toInvoice: Math.max(0, contracted - invoicedActive),
     proposalCount: proposals.length,
-    proposalValue,
-    weightedProposals,
+    proposalValue: proposals.reduce((s, p) => s + p.price, 0),
+    weightedProposals: proposals.reduce((s, p) => s + p.price * p.probability, 0),
   };
 }
 
-/* ------------------------------------------------------------------ */
-/* Úspěšnost                                                           */
-/* ------------------------------------------------------------------ */
-
-export function averageProjectPrice(): number {
-  const won = projects.filter((p) => ["completed", "in_progress", "on_hold"].includes(p.status));
-  return won.reduce((s, p) => s + p.price, 0) / Math.max(1, won.length);
+export function averageProjectPrice(ctx: DataContext): number {
+  const won = ctx.projects.filter((p) => WON.includes(p.status));
+  return won.length ? won.reduce((s, p) => s + p.price, 0) / won.length : 0;
 }
 
-export function successMetrics() {
+export function successMetrics(projects: Project[]) {
   const completed = projects.filter((p) => p.status === "completed");
   const cancelled = projects.filter((p) => p.status === "cancelled");
   const lost = projects.filter((p) => p.status === "lost");
-  const signed = projects.filter(isSigned);
-  const rated = projects.filter((p) => typeof p.rating === "number");
-  const onTime = completed.filter((p) => p.actualEndDate && p.actualEndDate <= p.plannedEndDate);
-  const onBudget = completed.filter((p) => p.actualHours <= p.estimatedHours);
+  const signed = projects.filter((p) => SIGNED.includes(p.status));
+  const rated = projects.filter((p) => typeof p.rating === "number" && p.rating > 0);
+  const onTime = completed.filter((p) => p.actualEndDate && p.plannedEndDate && p.actualEndDate <= p.plannedEndDate);
+  const onBudget = completed.filter((p) => p.estimatedHours > 0 && p.actualHours <= p.estimatedHours);
+  const ratio = (a: number, b: number) => (b > 0 ? a / b : null);
   return {
     completed: completed.length,
     cancelled: cancelled.length,
     lost: lost.length,
-    winRate: signed.length / Math.max(1, signed.length + lost.length),
-    successRate: completed.length / Math.max(1, completed.length + cancelled.length),
-    avgRating: rated.reduce((s, p) => s + (p.rating ?? 0), 0) / Math.max(1, rated.length),
+    winRate: ratio(signed.length, signed.length + lost.length),
+    successRate: ratio(completed.length, completed.length + cancelled.length),
+    avgRating: rated.length ? rated.reduce((s, p) => s + (p.rating ?? 0), 0) / rated.length : null,
     ratedCount: rated.length,
-    onTimeRate: onTime.length / Math.max(1, completed.length),
-    onBudgetRate: onBudget.length / Math.max(1, completed.length),
+    onTimeRate: ratio(onTime.length, completed.length),
+    onBudgetRate: ratio(onBudget.length, completed.filter((p) => p.estimatedHours > 0).length),
   };
 }
 
-export function outcomeReasons() {
+export function outcomeReasons(projects: Project[]) {
   const positive = new Map<string, number>();
   const negative = new Map<string, number>();
   for (const p of projects) {
@@ -272,18 +249,14 @@ export function outcomeReasons() {
     if (!bucket) continue;
     for (const r of p.outcomeReasons) bucket.set(r, (bucket.get(r) ?? 0) + 1);
   }
-  const toRows = (m: Map<string, number>) =>
+  const rows = (m: Map<string, number>) =>
     [...m.entries()].map(([reason, count]) => ({ reason, count })).sort((a, b) => b.count - a.count);
-  return { positive: toRows(positive), negative: toRows(negative) };
+  return { positive: rows(positive), negative: rows(negative) };
 }
 
-/* ------------------------------------------------------------------ */
-/* Typy webů                                                           */
-/* ------------------------------------------------------------------ */
-
-export function revenueByType() {
+export function revenueByType(ctx: DataContext) {
   const types: WebType[] = ["eshop", "presentation", "webflow", "custom"];
-  const won = projects.filter((p) => ["completed", "in_progress", "on_hold"].includes(p.status));
+  const won = ctx.projects.filter((p) => WON.includes(p.status));
   return types.map((type) => {
     const list = won.filter((p) => p.type === type);
     return { type, value: list.reduce((s, p) => s + p.price, 0), count: list.length };
@@ -294,19 +267,42 @@ export function revenueByType() {
 /* Tým & kapacita                                                      */
 /* ------------------------------------------------------------------ */
 
-/** Projekty, na kterých se právě aktivně pracuje */
-export function runningProjects(at: Date = REFERENCE_DATE): Project[] {
-  return projects.filter(
-    (p) => p.status === "in_progress" && parseDate(p.startDate) <= at && parseDate(p.plannedEndDate) >= at,
+export function runningProjects(ctx: DataContext): Project[] {
+  const day = isoDate(ctx.today);
+  return ctx.projects.filter(
+    (p) => p.status === "in_progress" && (!p.startDate || p.startDate <= day) && (!p.plannedEndDate || p.plannedEndDate >= day),
   );
 }
 
-export function memberLoad(member: TeamMember, at: Date = REFERENCE_DATE) {
-  const assignments = runningProjects(at)
-    .map((p) => ({ project: p, hours: p.team.find((a) => a.memberId === member.id)?.hoursPerWeek ?? 0 }))
+export function memberLoad(ctx: DataContext, member: PublicUser) {
+  const assignments = runningProjects(ctx)
+    .map((project) => ({ project, hours: project.team.find((a) => a.memberId === member.id)?.hoursPerWeek ?? 0 }))
     .filter((a) => a.hours > 0);
   const allocated = assignments.reduce((s, a) => s + a.hours, 0);
-  return { assignments, allocated, utilization: allocated / member.hoursPerWeek };
+  return { assignments, allocated, utilization: member.hoursPerWeek > 0 ? allocated / member.hoursPerWeek : 0 };
+}
+
+export function avgMonthlyHoursPerProject(ctx: DataContext, type?: WebType): number | null {
+  const done = ctx.projects.filter(
+    (p) => p.status === "completed" && p.actualHours > 0 && p.startDate && (p.actualEndDate || p.plannedEndDate) && (!type || p.type === type),
+  );
+  if (!done.length) return null;
+  const values = done.map(
+    (p) => p.actualHours / Math.max(1, workdaysBetween(parseDate(p.startDate), parseDate(p.actualEndDate || p.plannedEndDate)) / 21),
+  );
+  return values.reduce((s, x) => s + x, 0) / values.length;
+}
+
+/** Výchozí odhad, dokud nemáte dokončené projekty (h / měsíc na jeden web) */
+export const DEFAULT_MONTHLY_HOURS = 80;
+
+export function avgMonthlyHoursByType(ctx: DataContext): Record<WebType, number> {
+  const overall = avgMonthlyHoursPerProject(ctx) ?? DEFAULT_MONTHLY_HOURS;
+  const result = {} as Record<WebType, number>;
+  for (const t of ["eshop", "presentation", "webflow", "custom"] as WebType[]) {
+    result[t] = avgMonthlyHoursPerProject(ctx, t) ?? overall;
+  }
+  return result;
 }
 
 export interface CapacityMonth {
@@ -314,85 +310,47 @@ export interface CapacityMonth {
   capacity: number;
   allocated: number;
   free: number;
+  buffer: number;
   utilization: number;
-  /** Kolik nových průměrných webů zvládneme nabrat (po odečtení vážené pipeline nabídek) */
   slots: number;
-  /** Hodiny, které by spotřebovaly nabídky vážené pravděpodobností */
   pipelineDemand: number;
-  members: { member: TeamMember; capacity: number; allocated: number }[];
 }
 
-/** Průměrná měsíční náročnost jednoho webu (hodiny / měsíc trvání) */
-export function avgMonthlyHoursPerProject(): number {
-  const done = projects.filter((p) => p.status === "completed");
-  const perMonth = done.map((p) => {
-    const months = Math.max(1, workdaysBetween(parseDate(p.startDate), parseDate(p.actualEndDate ?? p.plannedEndDate)) / 21);
-    return p.actualHours / months;
-  });
-  return perMonth.reduce((s, x) => s + x, 0) / Math.max(1, perMonth.length);
-}
-
-/** Bezpečnostní rezerva kapacity na podporu, obchod a nepředvídané úkoly */
-export const CAPACITY_BUFFER = 0.15;
-
-export function capacityForMonth(month: string): CapacityMonth {
+export function capacityForMonth(ctx: DataContext, month: string): CapacityMonth {
   const [mStart, mEnd] = monthBounds(month);
-  // Pro aktuální měsíc počítáme jen se zbývajícími pracovními dny
-  const from = month === REFERENCE_MONTH ? REFERENCE_DATE : mStart;
+  const from = month === currentMonth(ctx) ? ctx.today : mStart;
   const workdays = workdaysBetween(from, mEnd);
   const weeks = workdays / 5;
 
   const overlapWeeks = (p: Project) => {
-    const s = parseDate(p.startDate);
-    const e = parseDate(p.plannedEndDate);
+    const s = p.startDate ? parseDate(p.startDate) : from;
+    const e = p.plannedEndDate ? parseDate(p.plannedEndDate) : mEnd;
     const a = s > from ? s : from;
     const b = e < mEnd ? e : mEnd;
     return workdaysBetween(a, b) / 5;
   };
 
-  const inProgress = projects.filter((p) => p.status === "in_progress");
-  const proposals = projects.filter((p) => p.status === "proposal");
+  const inProgress = ctx.projects.filter((p) => p.status === "in_progress");
+  const proposals = ctx.projects.filter((p) => p.status === "proposal");
 
-  const members = team.map((member) => {
-    const capacity = member.hoursPerWeek * weeks;
-    const allocated = inProgress.reduce(
-      (s, p) => s + (p.team.find((a) => a.memberId === member.id)?.hoursPerWeek ?? 0) * overlapWeeks(p),
-      0,
-    );
-    return { member, capacity, allocated };
-  });
-
-  const capacity = members.reduce((s, m) => s + m.capacity, 0);
-  const allocated = members.reduce((s, m) => s + m.allocated, 0);
-  const free = Math.max(0, capacity * (1 - CAPACITY_BUFFER) - allocated);
+  const capacity = ctx.users.reduce((s, u) => s + u.hoursPerWeek * weeks, 0);
+  const allocated = inProgress.reduce((s, p) => s + p.team.reduce((t, a) => t + a.hoursPerWeek, 0) * overlapWeeks(p), 0);
+  const buffer = capacity * ctx.settings.capacityBuffer;
+  const free = Math.max(0, capacity - buffer - allocated);
   const pipelineDemand = proposals.reduce(
-    (s, p) => s + p.team.reduce((t, a) => t + a.hoursPerWeek, 0) * overlapWeeks(p) * (p.probability ?? 0),
+    (s, p) => s + p.team.reduce((t, a) => t + a.hoursPerWeek, 0) * overlapWeeks(p) * p.probability,
     0,
   );
-  const perProject = avgMonthlyHoursPerProject() * (workdays / 21);
+  const perProject = (avgMonthlyHoursPerProject(ctx) ?? DEFAULT_MONTHLY_HOURS) * (workdays / 21);
 
   return {
     month,
     capacity,
     allocated,
     free,
+    buffer: Math.min(buffer, Math.max(0, capacity - allocated)),
     utilization: capacity > 0 ? allocated / capacity : 0,
     slots: perProject > 0 ? Math.floor(Math.max(0, free - pipelineDemand) / perProject) : 0,
     pipelineDemand,
-    members,
   };
-}
-
-/** Průměrná měsíční náročnost podle typu webu (fallback na celkový průměr) */
-export function avgMonthlyHoursByType(): Record<WebType, number> {
-  const overall = avgMonthlyHoursPerProject();
-  const result = {} as Record<WebType, number>;
-  for (const type of ["eshop", "presentation", "webflow", "custom"] as WebType[]) {
-    const done = projects.filter((p) => p.status === "completed" && p.type === type);
-    const values = done.map(
-      (p) => p.actualHours / Math.max(1, workdaysBetween(parseDate(p.startDate), parseDate(p.actualEndDate ?? p.plannedEndDate)) / 21),
-    );
-    result[type] = values.length ? values.reduce((s, x) => s + x, 0) / values.length : overall;
-  }
-  return result;
 }

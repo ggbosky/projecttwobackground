@@ -1,35 +1,36 @@
 "use client";
 
-import { Bell, Command, Menu, Moon, Search, Sun, X } from "lucide-react";
+import { Bell, Command, LogOut, Menu, Moon, Plus, Search, Sun, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { logoutAction } from "@/app/actions/auth";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/cn";
-import { formatCZKCompact, formatDate } from "@/lib/format";
-import { CommandPalette } from "./CommandPalette";
-import { NAV, isActive } from "./nav";
+import { formatCZKCompact } from "@/lib/format";
+import type { PublicUser } from "@/lib/types";
+import { CommandPalette, type SearchItem } from "./CommandPalette";
+import { NAV, SETTINGS_NAV, isActive } from "./nav";
 import { useTheme, type ThemeChoice } from "./ThemeProvider";
 
 export interface ShellStats {
   activeProjects: number;
-  openPullRequests: number;
+  leads: number;
+  clients: number;
   overdueCount: number;
   overdueAmount: number;
-  leads: number;
-  referenceDate: string;
-  githubMode: "live" | "demo";
+  overdueTasks: number;
 }
 
 function Logo() {
   return (
     <Link href="/" className="group flex items-center gap-2.5 rounded-lg px-1 py-1">
-      <span className="relative flex size-7 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-[11px] font-bold text-white shadow-sm transition-transform group-hover:scale-105">
+      <span className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-[11px] font-bold text-white shadow-sm transition-transform group-hover:scale-105">
         P2
       </span>
       <span className="leading-tight">
         <span className="block text-sm font-semibold tracking-tight text-fg">Project Two</span>
-        <span className="block text-[11px] text-muted">Control Center</span>
+        <span className="block text-[11px] text-muted">CRM & řídicí centrum</span>
       </span>
     </Link>
   );
@@ -62,19 +63,28 @@ function ThemeSwitch() {
   );
 }
 
-function SidebarContent({ stats, onNavigate }: { stats: ShellStats; onNavigate?: () => void }) {
+function SidebarContent({ stats, user, onNavigate }: { stats: ShellStats; user: PublicUser; onNavigate?: () => void }) {
   const pathname = usePathname();
   const counts: Record<string, number | undefined> = {
     "/projects": stats.activeProjects,
-    "/github": stats.openPullRequests,
-    "/clients": stats.leads,
+    "/clients": stats.clients,
   };
+  const SettingsIcon = SETTINGS_NAV.icon;
   return (
     <div className="flex h-full flex-col">
       <div className="px-3 pt-4 pb-2">
         <Logo />
       </div>
-      <nav className="mt-3 flex-1 space-y-0.5 px-2" aria-label="Hlavní navigace">
+      <div className="px-3 pt-2">
+        <Link
+          href="/clients/new"
+          onClick={onNavigate}
+          className="flex h-8 items-center justify-center gap-1.5 rounded-lg bg-accent text-xs font-medium text-accent-fg shadow-card transition-all hover:brightness-110"
+        >
+          <Plus size={14} /> Nový klient
+        </Link>
+      </div>
+      <nav className="mt-4 flex-1 space-y-0.5 px-2" aria-label="Hlavní navigace">
         <p className="px-2.5 pb-1.5 text-[11px] font-medium tracking-wide text-muted uppercase">Workspace</p>
         {NAV.map((item) => {
           const active = isActive(pathname, item.href);
@@ -110,37 +120,62 @@ function SidebarContent({ stats, onNavigate }: { stats: ShellStats; onNavigate?:
             onClick={onNavigate}
             className="block rounded-lg border border-red-500/20 bg-red-500/5 p-2.5 text-xs transition-colors hover:bg-red-500/10"
           >
-            <span className="font-medium text-red-700 dark:text-red-400">
-              {stats.overdueCount} faktury po splatnosti
-            </span>
+            <span className="font-medium text-red-700 dark:text-red-400">{stats.overdueCount}× faktura po splatnosti</span>
             <span className="block text-muted">{formatCZKCompact(stats.overdueAmount)} k vymáhání</span>
           </Link>
         )}
         <ThemeSwitch />
-        <div className="flex items-center gap-2.5 px-1">
-          <Avatar name="Tomáš Dvořák" color="#6366f1" size="sm" />
-          <div className="min-w-0 leading-tight">
-            <p className="truncate text-xs font-medium text-fg">Tomáš Dvořák</p>
-            <p className="truncate text-[11px] text-muted">tomas@projecttwo.cz</p>
-          </div>
+        <div className="flex items-center gap-2 px-1">
+          <Link href="/settings" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg p-1 hover:bg-surface-2">
+            <Avatar name={user.name} color={user.color} size="sm" />
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate text-xs font-medium text-fg">{user.name}</span>
+              <span className="block truncate text-[11px] text-muted">{user.email}</span>
+            </span>
+          </Link>
+          <Link
+            href="/settings"
+            onClick={onNavigate}
+            className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-fg"
+            aria-label={SETTINGS_NAV.label}
+            title={SETTINGS_NAV.label}
+          >
+            <SettingsIcon size={15} />
+          </Link>
+          <form action={logoutAction}>
+            <button type="submit" className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-fg" aria-label="Odhlásit se" title="Odhlásit se">
+              <LogOut size={15} />
+            </button>
+          </form>
         </div>
       </div>
     </div>
   );
 }
 
-export function AppShell({ children, stats }: { children: ReactNode; stats: ShellStats }) {
+export function AppShell({
+  children,
+  stats,
+  user,
+  searchItems,
+}: {
+  children: ReactNode;
+  stats: ShellStats;
+  user: PublicUser;
+  searchItems: SearchItem[];
+}) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const { resolved, toggle } = useTheme();
   const pathname = usePathname();
+  const alerts = stats.overdueCount + stats.overdueTasks;
 
   useEffect(() => setMobileOpen(false), [pathname]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      const typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+      const typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable);
       if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || (e.key === "/" && !typing)) {
         e.preventDefault();
         setPaletteOpen((o) => !o);
@@ -156,19 +191,11 @@ export function AppShell({ children, stats }: { children: ReactNode; stats: Shel
 
   return (
     <div className="min-h-dvh">
-      {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-line bg-bg lg:block">
-        <SidebarContent stats={stats} />
+        <SidebarContent stats={stats} user={user} />
       </aside>
 
-      {/* Mobile drawer */}
-      <div
-        className={cn(
-          "fixed inset-0 z-50 lg:hidden",
-          mobileOpen ? "pointer-events-auto" : "pointer-events-none",
-        )}
-        aria-hidden={!mobileOpen}
-      >
+      <div className={cn("fixed inset-0 z-50 lg:hidden", mobileOpen ? "pointer-events-auto" : "pointer-events-none")} aria-hidden={!mobileOpen}>
         <div
           className={cn("absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity", mobileOpen ? "opacity-100" : "opacity-0")}
           onClick={() => setMobileOpen(false)}
@@ -186,19 +213,14 @@ export function AppShell({ children, stats }: { children: ReactNode; stats: Shel
           >
             <X size={18} />
           </button>
-          <SidebarContent stats={stats} onNavigate={() => setMobileOpen(false)} />
+          <SidebarContent stats={stats} user={user} onNavigate={() => setMobileOpen(false)} />
         </aside>
       </div>
 
       <div className="lg:pl-60">
-        {/* Topbar */}
         <header className="sticky top-0 z-20 border-b border-line bg-bg/80 backdrop-blur-xl">
           <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-2 px-4 sm:px-6">
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="-ml-1.5 rounded-md p-1.5 text-fg-2 hover:bg-surface-2 lg:hidden"
-              aria-label="Otevřít menu"
-            >
+            <button onClick={() => setMobileOpen(true)} className="-ml-1.5 rounded-md p-1.5 text-fg-2 hover:bg-surface-2 lg:hidden" aria-label="Otevřít menu">
               <Menu size={20} />
             </button>
             <div className="lg:hidden">
@@ -206,7 +228,7 @@ export function AppShell({ children, stats }: { children: ReactNode; stats: Shel
             </div>
             <button
               onClick={() => setPaletteOpen(true)}
-              className="group ml-auto flex h-9 items-center gap-2 rounded-lg border border-line bg-surface px-2.5 text-sm text-muted transition-colors hover:border-line-strong hover:text-fg-2 sm:w-72 lg:ml-0"
+              className="ml-auto flex h-9 items-center gap-2 rounded-lg border border-line bg-surface px-2.5 text-sm text-muted transition-colors hover:border-line-strong hover:text-fg-2 sm:w-72 lg:ml-0"
               aria-label="Hledat (Ctrl+K)"
             >
               <Search size={15} />
@@ -216,10 +238,6 @@ export function AppShell({ children, stats }: { children: ReactNode; stats: Shel
               </kbd>
             </button>
             <div className="flex items-center gap-1 lg:ml-auto">
-              <span className="mr-1 hidden items-center gap-1.5 rounded-full border border-line px-2 py-1 text-[11px] text-muted xl:inline-flex">
-                <span className="size-1.5 rounded-full bg-emerald-500" />
-                {stats.githubMode === "live" ? "GitHub live" : "Demo data"} · ref. {formatDate(stats.referenceDate)}
-              </span>
               <button
                 onClick={toggle}
                 className="rounded-lg p-2 text-fg-2 transition-colors hover:bg-surface-2 hover:text-fg"
@@ -228,14 +246,15 @@ export function AppShell({ children, stats }: { children: ReactNode; stats: Shel
                 {resolved === "dark" ? <Sun size={17} /> : <Moon size={17} />}
               </button>
               <Link
-                href="/finance#faktury"
+                href="/"
                 className="relative rounded-lg p-2 text-fg-2 transition-colors hover:bg-surface-2 hover:text-fg"
-                aria-label={`Upozornění: ${stats.overdueCount} faktury po splatnosti`}
+                aria-label={`Upozornění: ${alerts}`}
               >
                 <Bell size={17} />
-                {stats.overdueCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-red-500 ring-2 ring-bg" />
-                )}
+                {alerts > 0 && <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-red-500 ring-2 ring-bg" />}
+              </Link>
+              <Link href="/settings" className="ml-1 hidden sm:block" aria-label="Můj profil">
+                <Avatar name={user.name} color={user.color} size="sm" />
               </Link>
             </div>
           </div>
@@ -244,7 +263,7 @@ export function AppShell({ children, stats }: { children: ReactNode; stats: Shel
         <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">{children}</main>
       </div>
 
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={searchItems} />
     </div>
   );
 }

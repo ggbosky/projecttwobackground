@@ -1,4 +1,4 @@
-import type { ClientStatus, DeployState, InvoiceStatus, ProjectStatus, WebType } from "./types";
+import type { ClientStatus, CommunicationType, CompanySize, InvoiceStatus, Priority, ProjectStatus, Timeline, WebType } from "./types";
 
 export type Tone = "green" | "blue" | "amber" | "red" | "violet" | "gray" | "rose";
 
@@ -37,14 +37,6 @@ export const INVOICE_STATUS: Record<InvoiceStatus, StatusMeta> = {
   overdue: { label: "Po splatnosti", tone: "red" },
 };
 
-export const DEPLOY_STATE: Record<DeployState, StatusMeta> = {
-  ready: { label: "Ready", tone: "green" },
-  building: { label: "Building", tone: "amber" },
-  error: { label: "Error", tone: "red" },
-  queued: { label: "Queued", tone: "gray" },
-  none: { label: "Bez nasazení", tone: "gray" },
-};
-
 export const WEB_TYPE: Record<WebType, { label: string; color: string }> = {
   eshop: { label: "E-shop", color: "var(--series-1)" },
   presentation: { label: "Prezentační web", color: "var(--series-2)" },
@@ -53,3 +45,67 @@ export const WEB_TYPE: Record<WebType, { label: string; color: string }> = {
 };
 
 export const WEB_TYPE_ORDER: WebType[] = ["eshop", "presentation", "webflow", "custom"];
+
+export const PRIORITY: Record<Priority, StatusMeta> = {
+  A: { label: "A – klíčový", tone: "red" },
+  B: { label: "B – standard", tone: "blue" },
+  C: { label: "C – nízká", tone: "gray" },
+};
+
+export const COMPANY_SIZE: Record<CompanySize, string> = {
+  "": "Neuvedeno",
+  "1": "OSVČ / 1 osoba",
+  "2-10": "2–10 lidí",
+  "11-50": "11–50 lidí",
+  "51-200": "51–200 lidí",
+  "200+": "200+ lidí",
+};
+
+export const TIMELINE: Record<Timeline, string> = {
+  "": "Neznámý",
+  asap: "Ihned",
+  "1-3m": "Do 3 měsíců",
+  "3-6m": "3–6 měsíců",
+  "6m+": "Déle než 6 měsíců",
+};
+
+export const COMM_TYPE: Record<CommunicationType, string> = {
+  email: "E-mail",
+  call: "Telefonát",
+  meeting: "Schůzka",
+  note: "Poznámka",
+};
+
+export const CLIENT_SOURCES = [
+  "Doporučení",
+  "Web / poptávkový formulář",
+  "LinkedIn",
+  "Instagram / Facebook",
+  "Google",
+  "Event / networking",
+  "Cold outreach",
+  "Jiný",
+];
+
+export const EXPENSE_CATEGORIES = ["Mzdy a odměny", "Software a nástroje", "Marketing", "Kancelář", "Freelanceři", "Hardware", "Daně a poplatky", "Ostatní"];
+
+export const OUTCOME_REASONS_POSITIVE = [
+  "Dodáno nad očekávání",
+  "Dodrženo v termínu",
+  "Pod rozpočtem hodin",
+  "Jasné zadání",
+  "Rychlá zpětná vazba klienta",
+  "Dobrá spolupráce",
+];
+
+export const OUTCOME_REASONS_NEGATIVE = [
+  "Špatný budget klienta",
+  "Konkurence s nižší cenou",
+  "Nejasné zadání",
+  "Klient změnil strategii",
+  "Pomalá komunikace klienta",
+  "Nereálný termín",
+  "Rozšíření scope bez navýšení ceny",
+];
+
+export const MEMBER_COLORS = ["#6366f1", "#ec4899", "#14b8a6", "#f59e0b", "#3b82f6", "#22c55e"];

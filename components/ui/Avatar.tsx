@@ -1,6 +1,6 @@
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/format";
-import type { TeamMember } from "@/lib/types";
+import type { PublicUser } from "@/lib/types";
 
 const SIZES = {
   xs: "size-5 text-[9px]",
@@ -38,7 +38,7 @@ export function Avatar({
   );
 }
 
-export function AvatarStack({ members, max = 4, size = "sm" }: { members: TeamMember[]; max?: number; size?: keyof typeof SIZES }) {
+export function AvatarStack({ members, max = 4, size = "sm" }: { members: Pick<PublicUser, "id" | "name" | "color" | "role">[]; max?: number; size?: keyof typeof SIZES }) {
   const shown = members.slice(0, max);
   const rest = members.length - shown.length;
   return (

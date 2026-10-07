@@ -1,84 +1,75 @@
-# Project Two · Control Center
+# Project Two
 
-Interní **All-in-One dashboard** webové agentury Project Two – finance, klienti (CRM), projekty, úspěšnost zakázek, GitHub a kapacita týmu na jednom místě.
+Interní **CRM a řídicí centrum** agentury Project Two: klienti a leady s detailní analýzou, projekty, faktury, náklady, úspěšnost zakázek a kapacita týmu.
 
-**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Recharts · Lucide Icons · Geist font
+**Stack:** Next.js 16 (App Router, Server Actions) · React 19 · TypeScript · Tailwind CSS v4 · Recharts · Lucide
 
-Aplikace běží ihned po instalaci nad simulovanými daty (JSON v `data/`). GitHub modul se volitelně napojí na živé GitHub API.
+## Data zůstávají u vás
+
+- Aplikace **nepoužívá žádnou externí službu** (žádná databáze v cloudu, žádné GitHub API, žádná analytika).
+- Všechna data se ukládají do jediného souboru **`.data/db.json`** na serveru, kde aplikace běží. Složku lze změnit proměnnou `DATA_DIR`.
+- `.data/` je v `.gitignore`, takže **na GitHub jde jen kód**, nikdy data klientů.
+- Záloha = zkopírování souboru `.data/db.json`.
+
+## Přihlášení
+
+- Vlastní přihlašování, bez externích poskytovatelů. Hesla jsou uložená jen jako hash (scrypt) a session je v httpOnly cookie (30 dní).
+- **První spuštění:** aplikace sama otevře `/setup`, kde si vytvoříte první účet.
+- **Další členové týmu:** *Tým & kapacita → Přidat člena týmu* (jméno, e-mail, dočasné heslo). Kolega si heslo změní v *Nastavení*.
+- Po 5 špatných pokusech o přihlášení se účet na 5 minut zablokuje.
 
 ## Spuštění
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000
-npm run build && npm start   # produkční build
-npm run lint       # typová kontrola (tsc)
+npm run dev                      # vývoj na http://localhost:3000
+npm run build && npm start       # produkce
 ```
 
-Volitelně pro živá GitHub data:
-
-```bash
-cp .env.example .env.local
-# GITHUB_TOKEN=github_pat_...   (fine-grained, read-only)
-# GITHUB_ORG=vase-organizace    (volitelné – přepíše organizaci z data/repos.json)
-```
+> **Hosting:** aplikace potřebuje běžet jako Node.js server s trvalým diskem (vlastní počítač v kanceláři, VPS, Docker s volume, Railway/Fly.io s volume…).
+> Serverless platformy typu Vercel/Netlify **nejsou vhodné**, protože nemají trvalé úložiště a data by se ztrácela.
+> Při provozu přes internet použijte HTTPS (např. reverse proxy Caddy/Nginx). Cookie se pak automaticky označí jako `Secure`.
 
 ## Moduly
 
-| Stránka | Obsah |
+| Stránka | Co umí |
 |---|---|
-| **Přehled** `/` | KPI (obrat za měsíc, YTD, MRR, pipeline), mini‑metriky, graf příjmů, koláč typů webů, rozpracované projekty se skluzem, GitHub aktivita, vytížení týmu, otevřené faktury |
-| **Finance & KPI** `/finance` | Obrat měsíc/rok, **MRR & ARR** z retainerů, průměrná cena projektu, provozní marže vs. cíl, pohledávky; graf příjmů vs. nákladů (přepínač Obrat/Zisk); **Pipeline & Cashflow** (nasmlouváno vs. vyfakturováno, vážené nabídky); **profitabilita projektů** (řaditelná tabulka – příjem, náklady, zisk, marže, efektivní hodinovka, plán vs. realita hodin); faktury s filtrem stavu, typu, data a fulltextem |
-| **Klienti** `/clients` | CRM tabulka / karty, filtr stavu vztahu (Aktivní / Lead / Bývalý), odvětví, řazení, fulltext |
-| **Detail klienta** `/clients/[id]` | Kontakty, osobnost a tým klienta, interní poznámky, retainer, projekty, faktury, **historie komunikace** (s možností přidat záznam) |
-| **Projekty** `/projects` | Tabulka nebo Kanban board; filtry stav, typ webu, klient, **cenové rozpětí**, **období**, fulltext (i technologie); řazení; filtry se ukládají do URL |
-| **Detail projektu** `/projects/[id]` | Finální cena, fakturace, zisk/marže, čas plán vs. realita, tým, ekonomika, důvody úspěchu/neúspěchu, hodnocení ★ a citace klienta, napojený GitHub repozitář |
-| **Úspěšnost** `/success` | Úspěšnost realizace, win rate, hodnocení, dodržení termínu/rozpočtu, graf plán vs. realita, důvody úspěchu/neúspěchu, filtrovatelné případové studie |
-| **GitHub** `/github` | Stav připojení (live/demo), repozitáře s posledním commitem, otevřenými PR, issues a **stavem nasazení** (Vercel/Netlify), filtry, souhrnná aktivita |
-| **Tým & kapacita** `/team` | „O nás“, kapacitní plánovač (sloty na nové weby pro tento a další měsíce), simulátor nové zakázky, matice alokací, karty členů týmu |
+| **Přehled** | KPI, rozjezdový checklist, „Vyžaduje pozornost" (faktury po splatnosti, klienti bez kontaktu, úkoly po termínu), moje úkoly, poslední komunikace, graf příjmů, vytížení týmu, běžící projekty |
+| **Klienti (CRM)** | Přidávání a úpravy klientů, tabulka nebo karty, filtry (stav, odvětví, owner, „vyžaduje pozornost"), fulltext, řazení podle skóre/obratu/kontaktu |
+| **Detail klienta** | 4 záložky: **Analýza**, **Profil**, **Komunikace & úkoly**, **Projekty & faktury** (popsány níže) |
+| **Projekty** | Přidávání a úpravy zakázek (nabídka → realizace → předání), tým a hodiny, výsledek, důvody, hodnocení; tabulka nebo Kanban s filtry |
+| **Finance** | Faktury (vystavení, úhrada, po splatnosti), náklady, obrat, MRR/ARR, pipeline & cashflow, profitabilita projektů, koláč podle typů webů |
+| **Úspěšnost** | Win rate, úspěšnost realizace, plán vs. realita, hodnocení, důvody úspěchu/neúspěchu, případové studie |
+| **Tým & kapacita** | Účty týmu, vytížení, kapacitní plánovač na 4 měsíce, simulátor „zvládneme další web?" |
+| **Nastavení** | Profil (kapacita, nákladová sazba), změna hesla, cíle agentury |
 
-Dále: globální vyhledávání **⌘K / Ctrl+K** (nebo `/`), dark / light / auto režim bez probliknutí, plně responzivní layout s mobilním menu.
+### Detail klienta
+
+- **Profil:**
+  - firma (IČO, DIČ, odvětví, velikost, obrat, adresa, web);
+  - libovolný počet kontaktních osob s označením rozhodovatele;
+  - obchodní kvalifikace (rozpočet, potřeby, bolesti, rozhodovací proces, časový horizont, fit 1–5, konkurence, „proč my");
+  - digitální stav (současný web, platforma, sítě, cíle, KPI);
+  - fakturace a retainer;
+  - osobnost klienta a interní poznámky.
+- **Komunikace & úkoly:** log e-mailů, hovorů, schůzek a poznámek s dalším krokem; úkoly s termínem a řešitelem.
+- **Analýza (počítá se automaticky):**
+  - **Zdraví vztahu (0–100):** kontakt, platební morálka, úspěšnost projektů, ziskovost, spokojenost.
+  - **Lead score (0–100, Hot/Warm/Cold):** rozpočet vs. průměrná zakázka, fit, časový horizont, rozhodovatel, aktivita.
+  - **Finance:** LTV, uhrazeno a neuhrazeno, po splatnosti, průměrná doba úhrady a zpoždění, MRR, podíl na obratu agentury, graf po měsících.
+  - **Projekty:** hodnota, efektivní hodinová sazba, marže, úspěšnost, win rate, hodiny vs. odhad, dodržení termínu, hodnocení.
+  - **Komunikace:** poslední kontakt, četnost za 90 dní, rozpad podle typu, otevřené úkoly a úkoly po termínu.
+  - **Rizika a doporučené kroky**, úplnost profilu.
 
 ## Struktura
 
 ```
-app/                    stránky (App Router) + /api/github route handler
-components/
-  layout/               AppShell (sidebar, topbar), CommandPalette, ThemeProvider
-  ui/                   Card, Badge (status tagy), KpiCard, Progress, Stars, Avatar, ovládací prvky
-  charts/               Recharts grafy (příjmy, typy webů, pipeline, plán vs. realita, kapacita, sparkline)
-  clients/ projects/ finance/ github/ team/   moduly
-data/                   mock data: clients, projects, finance (faktury + náklady), repos, team
-lib/
-  types.ts              datový model
-  data.ts               datová vrstva (zde nahradit JSON za API / DB)
-  metrics.ts            výpočty KPI – MRR/ARR, pipeline, profitabilita, úspěšnost, kapacita
-  github.ts             napojení na GitHub REST API (server-only)
-  format.ts, status.ts  formátování CZK/dat a konfigurace stavů
+app/(auth)/        login, první nastavení
+app/(app)/         přihlášená část (přehled, klienti, projekty, finance, úspěšnost, tým, nastavení)
+app/actions/       Server Actions (zápis dat) – každá ověřuje přihlášení
+proxy.ts           rychlé přesměrování nepřihlášených na /login
+lib/server/        úložiště (db.ts), přihlášení a sessions (auth.ts), čtení formulářů
+lib/metrics.ts     výpočty KPI (obrat, MRR, pipeline, profitabilita, kapacita)
+lib/analysis.ts    analýza klienta (health score, lead score, rizika, doporučení)
+components/        UI, grafy, formuláře
 ```
-
-## Jak se počítají metriky
-
-- **Obrat** = součet vystavených faktur v daném měsíci/roce (projekty + retainery), bez DPH.
-- **MRR** = součet aktivních měsíčních retainerů; **ARR** = MRR × 12.
-- **Průměrná cena projektu** = průměr cen podepsaných zakázek (dokončené, běžící, pozastavené).
-- **Pipeline** = hodnota běžících zakázek − již vyfakturováno; nabídky vážené pravděpodobností výhry.
-- **Profitabilita** = příjem − (hodiny × plně zatížená hodinová sazba týmu vážená alokací + externí náklady). U běžících projektů projekce hodin podle aktuálního postupu.
-- **Win rate** = podepsané / (podepsané + prohrané nabídky); **úspěšnost realizace** = dokončené / (dokončené + zrušené).
-- **Kapacita** = týdenní kapacita členů × pracovní dny v měsíci − alokace běžících projektů − 15% rezerva; sloty = (volno − vážená pipeline) / průměrná měsíční náročnost webu.
-
-Mock data mají pevné referenční datum (`referenceDate` v `data/finance.json`, aktuálně 7. 10. 2026), aby metriky typu „tento měsíc“ dávaly smysl kdykoli.
-
-## GitHub integrace
-
-`lib/github.ts` běží jen na serveru – token se nikdy nedostane do prohlížeče. Klientské komponenty volají `/api/github` (případně `?repo=owner/name`).
-
-- bez `GITHUB_TOKEN` → demo data z `data/repos.json`,
-- s tokenem → pro každý repozitář z `data/repos.json` se načtou commity, otevřené PR, issues a poslední deployment + status (Vercel i Netlify je do GitHub Deployments zapisují automaticky). Odpovědi se cachují 5 minut.
-- Repozitář, který se nepodaří načíst, zobrazí demo data s upozorněním.
-
-Mapování repozitář ↔ projekt je v `data/repos.json` (`projectId`) a `data/projects.json` (`repo`).
-
-## Napojení na reálná data
-
-Všechny stránky čtou data přes `lib/data.ts`. Pro produkci stačí tyto funkce nahradit voláním databáze nebo API (Supabase, Notion, Fakturoid, Pipedrive…) se stejnými typy z `lib/types.ts` – výpočty v `lib/metrics.ts` i UI zůstanou beze změny. Záznamy komunikace přidané v detailu klienta se v demu ukládají jen do `localStorage` prohlížeče.

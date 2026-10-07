@@ -11,10 +11,9 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Progress } from "@/components/ui/Progress";
 import { Stars } from "@/components/ui/Stars";
 import { cn } from "@/lib/cn";
-import { clientName, clients, getMember, projects } from "@/lib/data";
 import { formatCZK, formatCZKCompact, formatDate, formatDateShort } from "@/lib/format";
 import { PROJECT_STATUS, PROJECT_STATUS_ORDER, WEB_TYPE, WEB_TYPE_ORDER } from "@/lib/status";
-import type { Project, ProjectStatus, TeamMember } from "@/lib/types";
+import type { Project, ProjectStatus, PublicUser } from "@/lib/types";
 
 type SortKey = "startDate" | "plannedEndDate" | "price" | "progress" | "name";
 
@@ -86,7 +85,7 @@ function toQuery(f: Filters): string {
   return s ? `?${s}` : "";
 }
 
-function applyFilters(list: Project[], f: Filters): Project[] {
+function applyFilters(list: Project[], f: Filters, clientName: (id: string) => string): Project[] {
   const q = normalize(f.q.trim());
   const min = f.min ? Number(f.min) : undefined;
   const max = f.max ? Number(f.max) : undefined;
@@ -97,9 +96,9 @@ function applyFilters(list: Project[], f: Filters): Project[] {
     if (min !== undefined && p.price < min) return false;
     if (max !== undefined && p.price > max) return false;
     // Datum: projekt zasahuje do zvoleného intervalu
-    if (f.from && (p.actualEndDate ?? p.plannedEndDate) < f.from) return false;
+    if (f.from && (p.actualEndDate || p.plannedEndDate) < f.from) return false;
     if (f.to && p.startDate > f.to) return false;
-    if (q && !normalize(`${p.name} ${clientName(p.clientId)} ${p.stack.join(" ")} ${p.description} ${p.repo ?? ""}`).includes(q))
+    if (q && !normalize(`${p.name} ${clientName(p.clientId)} ${p.stack.join(" ")} ${p.description}`).includes(q))
       return false;
     return true;
   });
@@ -120,7 +119,17 @@ function applyFilters(list: Project[], f: Filters): Project[] {
   });
 }
 
-export function ProjectsExplorer() {
+export function ProjectsExplorer({
+  projects,
+  clients,
+  users,
+}: {
+  projects: Project[];
+  clients: { id: string; name: string }[];
+  users: PublicUser[];
+}) {
+  const clientName = (id: string) => clients.find((c) => c.id === id)?.name ?? "Smazaný klient";
+  const getMember = (id: string) => users.find((u) => u.id === id);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -137,7 +146,8 @@ export function ProjectsExplorer() {
   }, [f]);
 
   const set = <K extends keyof Filters>(key: K, value: Filters[K]) => setF((cur) => ({ ...cur, [key]: value }));
-  const filtered = useMemo(() => applyFilters(projects, f), [f]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const filtered = useMemo(() => applyFilters(projects, f, clientName), [f, projects, clients]);
   const total = filtered.reduce((s, p) => s + p.price, 0);
   const boardColumns = f.status.length ? PROJECT_STATUS_ORDER.filter((s) => f.status.includes(s)) : PROJECT_STATUS_ORDER;
   const activeFilterCount =
@@ -200,7 +210,7 @@ export function ProjectsExplorer() {
               onChange={(v) => set("client", v)}
               options={[
                 { value: "all", label: "Všichni klienti" },
-                ...[...clients].sort((a, b) => a.company.localeCompare(b.company, "cs")).map((c) => ({ value: c.id, label: c.company })),
+                ...[...clients].sort((a, b) => a.name.localeCompare(b.name, "cs")).map((c) => ({ value: c.id, label: c.name })),
               ]}
             />
             <NumberInput label="Cena od" value={f.min} onChange={(v) => set("min", v)} placeholder="Cena od" />
@@ -256,7 +266,7 @@ export function ProjectsExplorer() {
             </thead>
             <tbody className="divide-y divide-line">
               {filtered.map((p) => {
-                const members = p.team.map((a) => getMember(a.memberId)).filter(Boolean) as TeamMember[];
+                const members = p.team.map((a) => getMember(a.memberId)).filter(Boolean) as PublicUser[];
                 const late = p.actualEndDate && p.status === "completed" && p.actualEndDate > p.plannedEndDate;
                 return (
                   <tr key={p.id} className="group transition-colors hover:bg-surface-2/60">
@@ -295,7 +305,7 @@ export function ProjectsExplorer() {
                     </td>
                     <td className="tabular px-3 py-3 text-xs text-fg-2">{formatDate(p.startDate)}</td>
                     <td className="tabular px-3 py-3 text-xs">
-                      <span className="text-fg-2">{formatDate(p.actualEndDate ?? p.plannedEndDate)}</span>
+                      <span className="text-fg-2">{formatDate(p.actualEndDate || p.plannedEndDate)}</span>
                       {late && <span className="block text-[11px] text-amber-700 dark:text-amber-400">po termínu</span>}
                     </td>
                     <td className="px-3 py-3 pr-5">{members.length ? <AvatarStack members={members} max={3} size="xs" /> : <span className="text-xs text-muted">—</span>}</td>
@@ -326,7 +336,7 @@ export function ProjectsExplorer() {
                   </div>
                   <div className="space-y-2">
                     {column.map((p) => {
-                      const members = p.team.map((a) => getMember(a.memberId)).filter(Boolean) as TeamMember[];
+                      const members = p.team.map((a) => getMember(a.memberId)).filter(Boolean) as PublicUser[];
                       return (
                         <Link
                           key={p.id}
@@ -340,7 +350,7 @@ export function ProjectsExplorer() {
                           )}
                           <div className="mt-2 flex items-center justify-between">
                             <span className="tabular text-[11px] font-medium text-fg-2">{formatCZKCompact(p.price)}</span>
-                            <span className="text-[11px] text-muted">{formatDateShort(p.actualEndDate ?? p.plannedEndDate)}</span>
+                            <span className="text-[11px] text-muted">{formatDateShort(p.actualEndDate || p.plannedEndDate)}</span>
                           </div>
                           {members.length > 0 && (
                             <div className="mt-2">
