@@ -18,7 +18,18 @@ Interní **CRM a řídicí centrum** agentury Project Two: klienti a leady s det
 - **Další členové týmu:** *Tým & kapacita → Přidat člena týmu* (jméno, e-mail, dočasné heslo). Kolega si heslo změní v *Nastavení*.
 - Po 5 špatných pokusech o přihlášení se účet na 5 minut zablokuje.
 
-## Spuštění
+## Spuštění přímo z GitHubu (Codespaces)
+
+1. Na stránce repozitáře klikněte na **Code → Codespaces → Create codespace**.
+2. Počkejte zhruba 2–3 minuty: nainstalují se závislosti, aplikace se sestaví a spustí.
+3. Aplikace se sama otevře v nové záložce. Jinak ji najdete v záložce **Ports** u portu 3000 (ikona zeměkoule).
+4. Kolegům pošlete tu samou adresu. V záložce **Ports** nastavte u portu 3000 viditelnost **Public**, jinak se k ní dostane jen vlastník Codespace. Přístup chrání vlastní přihlášení aplikace.
+
+> Codespace se po 30 minutách nečinnosti uspí. Znovu ho spustíte přes **Code → Codespaces**, data v `.data/` zůstanou.
+> Codespace, který se 30 dní nepoužívá, GitHub smaže i s daty, proto si `.data/db.json` občas stáhněte jako zálohu.
+> Pro trvalý provoz pro celý tým je lepší vlastní server (viz níže).
+
+## Spuštění na vlastním počítači / serveru
 
 ```bash
 npm install
