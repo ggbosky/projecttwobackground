@@ -4,6 +4,14 @@ Interní **CRM a řídicí centrum** agentury Project Two: klienti a leady s det
 
 **Stack:** Next.js 16 (App Router, Server Actions) · React 19 · TypeScript · Tailwind CSS v4 · Recharts · Lucide
 
+## Verze na GitHub Pages
+
+Na **https://ggbosky.github.io/projecttwobackground/** běží verze aplikace, která funguje celá v prohlížeči (soubor `index.html` v kořeni repa).
+
+- Data se ukládají **jen v prohlížeči** daného člověka (localStorage). Kolegům je předáte tlačítky **Exportovat / Importovat data** v horní liště.
+- Po úpravě kódu verzi pro Pages přegenerujete příkazem `npm run build:pages` a pushnete.
+- Pro společná data v reálném čase spusťte serverovou verzi (níže).
+
 ## Data zůstávají u vás
 
 - Aplikace **nepoužívá žádnou externí službu** (žádná databáze v cloudu, žádné GitHub API, žádná analytika).
