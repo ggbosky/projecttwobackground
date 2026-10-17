@@ -7,7 +7,7 @@ import { KpiCard } from "@/components/ui/KpiCard";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { formatNumber, formatPercent } from "@/lib/format";
 import { outcomeReasons, successMetrics } from "@/lib/metrics";
-import { getData } from "@/lib/server/auth";
+import { getData } from "@/lib/server/context";
 
 export const metadata: Metadata = { title: "Úspěšnost projektů" };
 

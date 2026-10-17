@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { getData } from "@/lib/server/auth";
+import { getData } from "@/lib/server/context";
 
 export const metadata: Metadata = { title: "Upravit projekt" };
 

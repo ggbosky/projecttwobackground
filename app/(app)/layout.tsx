@@ -3,7 +3,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import type { SearchItem } from "@/components/layout/CommandPalette";
 import { isoDate } from "@/lib/format";
 import { clientName, receivables } from "@/lib/metrics";
-import { getData } from "@/lib/server/auth";
+import { getData } from "@/lib/server/context";
 import { CLIENT_STATUS, PROJECT_STATUS } from "@/lib/status";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
@@ -48,7 +48,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <AppShell stats={stats} user={me} searchItems={searchItems}>
+    <AppShell stats={stats} user={me} members={ctx.users} searchItems={searchItems}>
       {children}
     </AppShell>
   );

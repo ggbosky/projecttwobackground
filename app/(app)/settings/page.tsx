@@ -1,30 +1,18 @@
-import { Database, KeyRound, SlidersHorizontal, UserRound } from "lucide-react";
+import { Database, SlidersHorizontal } from "lucide-react";
 import type { Metadata } from "next";
-import { AgencySettingsForm, PasswordForm, ProfileForm } from "@/components/team/SettingsForms";
+import { AgencySettingsForm } from "@/components/team/SettingsForms";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { getData } from "@/lib/server/auth";
+import { getData } from "@/lib/server/context";
 
 export const metadata: Metadata = { title: "Nastavení" };
 
 export default async function SettingsPage() {
-  const { me, ctx } = await getData();
+  const { ctx } = await getData();
   return (
     <div className="animate-in max-w-4xl">
-      <PageHeader eyebrow="Účet" title="Nastavení" description="Tvůj profil, heslo a společné cíle agentury." />
+      <PageHeader eyebrow="Workspace" title="Nastavení" description="Společné cíle agentury a informace o uložených datech. Členy týmu upravíte v sekci Tým." />
       <div className="space-y-4">
-        <Card>
-          <CardHeader title="Můj profil" icon={<UserRound size={15} />} />
-          <CardBody>
-            <ProfileForm me={me} />
-          </CardBody>
-        </Card>
-        <Card>
-          <CardHeader title="Změna hesla" icon={<KeyRound size={15} />} />
-          <CardBody>
-            <PasswordForm />
-          </CardBody>
-        </Card>
         <Card>
           <CardHeader title="Cíle agentury" description="Společné pro celý tým" icon={<SlidersHorizontal size={15} />} />
           <CardBody>
@@ -35,13 +23,12 @@ export default async function SettingsPage() {
           <CardHeader title="Kde jsou data" icon={<Database size={15} />} />
           <CardBody className="space-y-2 text-sm text-fg-2">
             <p>
-              Všechna data (klienti, projekty, faktury, účty) jsou uložená v jednom souboru{" "}
-              <code className="rounded bg-surface-3 px-1 font-mono text-xs">.data/db.json</code> na serveru, kde aplikace běží. Nikam jinam se
-              neposílají a nejsou součástí GitHub repozitáře.
+              Aplikace je otevřená bez přihlašování. Všechna data jsou uložená v souboru{" "}
+              <code className="rounded bg-surface-3 px-1 font-mono text-xs">.data/db.json</code> na serveru, kde aplikace běží, a nikam jinam se
+              neposílají.
             </p>
             <p className="text-xs text-muted">
-              Zálohu uděláte zkopírováním tohoto souboru. Hesla jsou uložená jen jako hash (scrypt). Aktuálně: {ctx.clients.length} klientů,{" "}
-              {ctx.projects.length} projektů, {ctx.invoices.length} faktur, {ctx.users.length} účtů.
+              Aktuálně: {ctx.clients.length} klientů, {ctx.projects.length} projektů, {ctx.invoices.length} faktur, {ctx.users.length} členů týmu.
             </p>
           </CardBody>
         </Card>

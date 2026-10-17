@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { removeMemberAction } from "@/app/actions/team";
 import { CapacityPlanner, type PlannerMonth } from "@/components/team/CapacityPlanner";
-import { AddMemberForm } from "@/components/team/MemberForms";
+import { AddMemberForm, EditMember } from "@/components/team/MemberForms";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/Progress";
 import { cn } from "@/lib/cn";
 import { formatHours, formatMonthShort, formatNumber, formatPercent } from "@/lib/format";
 import { addMonths, avgMonthlyHoursByType, capacityForMonth, currentMonth, memberLoad, runningProjects } from "@/lib/metrics";
-import { getData } from "@/lib/server/auth";
+import { getData } from "@/lib/server/context";
 
 export const metadata: Metadata = { title: "Tým & kapacita" };
 
@@ -43,8 +43,13 @@ export default async function TeamPage() {
         eyebrow="Project Two Operations"
         title="Tým & kapacita"
         description="Kdo z nás na čem dělá, jak jsme vytížení a kolik nových webů zvládneme nabrat."
-        actions={<AddMemberForm />}
+        actions={ctx.users.length ? <AddMemberForm /> : undefined}
       />
+      {ctx.users.length === 0 && (
+        <div className="mb-4">
+          <AddMemberForm firstMember />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {ctx.users.map((m) => {
@@ -56,7 +61,7 @@ export default async function TeamPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-fg">
                     {m.name}
-                    {m.id === me.id && <span className="ml-2 rounded bg-accent-soft px-1.5 text-[10px] font-medium text-accent">to jsi ty</span>}
+                    {m.id === me?.id && <span className="ml-2 rounded bg-accent-soft px-1.5 text-[10px] font-medium text-accent">pracuji jako</span>}
                   </p>
                   <p className="text-xs text-muted">{m.role || "Bez role"}</p>
                   <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted">
@@ -96,16 +101,11 @@ export default async function TeamPage() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-3 flex justify-end gap-2 border-t border-line pt-3">
-                {m.id === me.id ? (
-                  <Link href="/settings" className="text-xs font-medium text-accent hover:underline">
-                    Upravit můj profil
-                  </Link>
-                ) : (
-                  <ConfirmAction action={removeMemberAction.bind(null, m.id)} confirmLabel="Opravdu odebrat účet?" variant="ghost">
-                    <UserMinus size={13} /> Odebrat
-                  </ConfirmAction>
-                )}
+              <div className="mt-3 flex flex-wrap items-start justify-end gap-2 border-t border-line pt-3">
+                <EditMember member={m} />
+                <ConfirmAction action={removeMemberAction.bind(null, m.id)} confirmLabel="Opravdu odebrat?" variant="ghost">
+                  <UserMinus size={13} /> Odebrat
+                </ConfirmAction>
               </div>
             </Card>
           );
@@ -122,7 +122,7 @@ export default async function TeamPage() {
           <CapacityPlanner months={months} perTypeMonthlyHours={avgMonthlyHoursByType(ctx)} />
           {!ctx.projects.some((p) => p.status === "completed") && (
             <p className="mt-4 text-[11px] text-muted">
-              Dokud nemáte dokončené projekty, počítá se s průměrnou náročností 80 h na web za měsíc. Po prvních dokončených zakázkách se odhad zpřesní z vašich dat.
+              Dokud nemáte dokončené projekty, počítá se s průměrnou náročností 60 h na web za měsíc (web je podle projectwo.com online za 2–3 týdny). Po prvních dokončených zakázkách se odhad zpřesní z vašich dat.
             </p>
           )}
         </CardBody>

@@ -8,7 +8,9 @@ Interní **CRM a řídicí centrum** agentury Project Two: klienti a leady s det
 
 Na **https://ggbosky.github.io/projecttwobackground/** běží verze aplikace, která funguje celá v prohlížeči (soubor `index.html` v kořeni repa).
 
-- Data se ukládají **jen v prohlížeči** daného člověka (localStorage). Kolegům je předáte tlačítky **Exportovat / Importovat data** v horní liště.
+- Aplikace se **otevře rovnou, bez přihlašování**.
+- **Paměť:** vše, co zadáte, se automaticky ukládá do prohlížeče (localStorage). Aplikace požádá prohlížeč o trvalé úložiště a každý den si sama uloží zálohu (posledních 14 dní, obnovíte ji v horní liště přes *Denní zálohy*).
+- Data jsou **jen v prohlížeči** daného člověka. Kolegům je předáte tlačítky **Stáhnout zálohu / Nahrát ze souboru** v horní liště. Stažený soubor je zároveň nejbezpečnější záloha.
 - Po úpravě kódu verzi pro Pages přegenerujete příkazem `npm run build:pages` a pushnete.
 - Pro společná data v reálném čase spusťte serverovou verzi (níže).
 
@@ -19,19 +21,29 @@ Na **https://ggbosky.github.io/projecttwobackground/** běží verze aplikace, k
 - `.data/` je v `.gitignore`, takže **na GitHub jde jen kód**, nikdy data klientů.
 - Záloha = zkopírování souboru `.data/db.json`.
 
-## Přihlášení
+## Bez přihlašování
 
-- Vlastní přihlašování, bez externích poskytovatelů. Hesla jsou uložená jen jako hash (scrypt) a session je v httpOnly cookie (30 dní).
-- **První spuštění:** aplikace sama otevře `/setup`, kde si vytvoříte první účet.
-- **Další členové týmu:** *Tým & kapacita → Přidat člena týmu* (jméno, e-mail, dočasné heslo). Kolega si heslo změní v *Nastavení*.
-- Po 5 špatných pokusech o přihlášení se účet na 5 minut zablokuje.
+- Aplikace nemá login, kdo ji otevře, může ji používat.
+- Členy týmu přidáte v *Tým & kapacita*. Vlevo dole v menu si přepnete **„Pracuji jako“**, podle toho se plní „Moje úkoly“ a autor záznamů v komunikaci.
+- Serverovou verzi proto nevystavujte veřejně na internet bez dalšího zabezpečení (VPN, heslo na reverse proxy apod.).
+
+## Data z webu projectwo.com
+
+Stránka **Agentura** obsahuje informace převzaté z webu https://projectwo.com/ (staženo jednorázově a uložené v `lib/agency.ts`, aplikace se na web za běhu nepřipojuje):
+
+- služby, ceník webů (Start / Business / Premium) a péče o web (Basic / Standard / Plus) s počty klientů a projektů v CRM;
+- postup spolupráce, FAQ, kontakt a provozovatel;
+- **reference z webu** a jejich přidání do CRM jedním kliknutím;
+- typy poptávek a rozpočtová pásma z poptávkového formuláře, které jsou k dispozici v kartě klienta, a balíčky v kartě projektu.
+
+Když se web změní, upravte `lib/agency.ts` (a pro Pages spusťte `npm run build:pages`).
 
 ## Spuštění přímo z GitHubu (Codespaces)
 
 1. Na stránce repozitáře klikněte na **Code → Codespaces → Create codespace**.
 2. Počkejte zhruba 2–3 minuty: nainstalují se závislosti, aplikace se sestaví a spustí.
 3. Aplikace se sama otevře v nové záložce. Jinak ji najdete v záložce **Ports** u portu 3000 (ikona zeměkoule).
-4. Kolegům pošlete tu samou adresu. V záložce **Ports** nastavte u portu 3000 viditelnost **Public**, jinak se k ní dostane jen vlastník Codespace. Přístup chrání vlastní přihlášení aplikace.
+4. Kolegům pošlete tu samou adresu. V záložce **Ports** nastavte u portu 3000 viditelnost **Public**, jinak se k ní dostane jen vlastník Codespace. Aplikace nemá přihlašování, adresu proto dávejte jen kolegům.
 
 > Codespace se po 30 minutách nečinnosti uspí. Znovu ho spustíte přes **Code → Codespaces**, data v `.data/` zůstanou.
 > Codespace, který se 30 dní nepoužívá, GitHub smaže i s daty, proto si `.data/db.json` občas stáhněte jako zálohu.
@@ -47,7 +59,7 @@ npm run build && npm start       # produkce
 
 > **Hosting:** aplikace potřebuje běžet jako Node.js server s trvalým diskem (vlastní počítač v kanceláři, VPS, Docker s volume, Railway/Fly.io s volume…).
 > Serverless platformy typu Vercel/Netlify **nejsou vhodné**, protože nemají trvalé úložiště a data by se ztrácela.
-> Při provozu přes internet použijte HTTPS (např. reverse proxy Caddy/Nginx). Cookie se pak automaticky označí jako `Secure`.
+> Při provozu přes internet použijte HTTPS a ochranu přístupu na reverse proxy (např. Caddy/Nginx s heslem), aplikace sama login nemá.
 
 ## Moduly
 
@@ -59,8 +71,9 @@ npm run build && npm start       # produkce
 | **Projekty** | Přidávání a úpravy zakázek (nabídka → realizace → předání), tým a hodiny, výsledek, důvody, hodnocení; tabulka nebo Kanban s filtry |
 | **Finance** | Faktury (vystavení, úhrada, po splatnosti), náklady, obrat, MRR/ARR, pipeline & cashflow, profitabilita projektů, koláč podle typů webů |
 | **Úspěšnost** | Win rate, úspěšnost realizace, plán vs. realita, hodnocení, důvody úspěchu/neúspěchu, případové studie |
-| **Tým & kapacita** | Účty týmu, vytížení, kapacitní plánovač na 4 měsíce, simulátor „zvládneme další web?" |
-| **Nastavení** | Profil (kapacita, nákladová sazba), změna hesla, cíle agentury |
+| **Agentura** | Služby, ceník, péče, postup, FAQ a reference z projectwo.com, import referencí do CRM |
+| **Tým & kapacita** | Přidání, úprava a odebrání členů, vytížení, kapacitní plánovač na 4 měsíce, simulátor „zvládneme další web?" |
+| **Nastavení** | Cíle agentury, informace o uložení dat |
 
 ### Detail klienta
 
@@ -83,11 +96,11 @@ npm run build && npm start       # produkce
 ## Struktura
 
 ```
-app/(auth)/        login, první nastavení
-app/(app)/         přihlášená část (přehled, klienti, projekty, finance, úspěšnost, tým, nastavení)
-app/actions/       Server Actions (zápis dat) – každá ověřuje přihlášení
-proxy.ts           rychlé přesměrování nepřihlášených na /login
-lib/server/        úložiště (db.ts), přihlášení a sessions (auth.ts), čtení formulářů
+app/(app)/         aplikace (přehled, klienti, projekty, finance, úspěšnost, agentura, tým, nastavení)
+app/actions/       Server Actions (zápis dat)
+lib/server/        úložiště (db.ts), aktuální člen týmu (context.ts), čtení formulářů
+lib/agency.ts      data převzatá z projectwo.com
+static-build/      sestavení verze pro GitHub Pages (úložiště v prohlížeči)
 lib/metrics.ts     výpočty KPI (obrat, MRR, pipeline, profitabilita, kapacita)
 lib/analysis.ts    analýza klienta (health score, lead score, rizika, doporučení)
 components/        UI, grafy, formuláře

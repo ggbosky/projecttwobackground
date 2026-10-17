@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ClientForm } from "@/components/clients/ClientForm";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { getData } from "@/lib/server/auth";
+import { getData } from "@/lib/server/context";
 
 export const metadata: Metadata = { title: "Nový klient" };
 
@@ -14,7 +14,7 @@ export default async function NewClientPage() {
         title="Nový klient"
         description="Vyplňte, co víte – povinný je jen název. Čím víc údajů, tím přesnější analýza a lead score."
       />
-      <ClientForm users={ctx.users} meId={me.id} />
+      <ClientForm users={ctx.users} meId={me?.id ?? ""} />
     </div>
   );
 }

@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser } from "@/lib/server/auth";
 import { newId, updateDb } from "@/lib/server/db";
 import { clamp, date, num, oneOf, str } from "@/lib/server/form";
 import type { ActionState, Invoice } from "@/lib/types";
@@ -17,7 +16,6 @@ function addDays(day: string, days: number): string {
 }
 
 export async function saveInvoiceAction(_: ActionState, fd: FormData): Promise<ActionState> {
-  await requireUser();
   const clientId = str(fd, "clientId", 40);
   const amount = num(fd, "amount");
   if (!clientId) return { error: "Vyberte klienta." };
@@ -53,7 +51,6 @@ export async function saveInvoiceAction(_: ActionState, fd: FormData): Promise<A
 }
 
 export async function setInvoicePaidAction(id: string, paid: boolean): Promise<void> {
-  await requireUser();
   await updateDb((db) => {
     const inv = db.invoices.find((i) => i.id === id);
     if (inv) {
@@ -65,7 +62,6 @@ export async function setInvoicePaidAction(id: string, paid: boolean): Promise<v
 }
 
 export async function deleteInvoiceAction(id: string): Promise<void> {
-  await requireUser();
   await updateDb((db) => {
     db.invoices = db.invoices.filter((i) => i.id !== id);
   });
@@ -73,7 +69,6 @@ export async function deleteInvoiceAction(id: string): Promise<void> {
 }
 
 export async function saveExpenseAction(_: ActionState, fd: FormData): Promise<ActionState> {
-  await requireUser();
   const amount = num(fd, "amount");
   if (amount <= 0) return { error: "Zadejte částku větší než 0." };
   await updateDb((db) => {
@@ -91,7 +86,6 @@ export async function saveExpenseAction(_: ActionState, fd: FormData): Promise<A
 }
 
 export async function deleteExpenseAction(id: string): Promise<void> {
-  await requireUser();
   await updateDb((db) => {
     db.expenses = db.expenses.filter((e) => e.id !== id);
   });
@@ -99,7 +93,6 @@ export async function deleteExpenseAction(id: string): Promise<void> {
 }
 
 export async function saveSettingsAction(_: ActionState, fd: FormData): Promise<ActionState> {
-  await requireUser();
   await updateDb((db) => {
     db.settings = {
       targetMonthlyRevenue: Math.max(0, num(fd, "targetMonthlyRevenue")),

@@ -31,7 +31,7 @@ import { cn } from "@/lib/cn";
 import { formatCZK, formatDate, formatHours, formatNumber, formatPercent, isoDate, parseDate, plural } from "@/lib/format";
 import { memberById, projectFinancials } from "@/lib/metrics";
 import { invoiceRows } from "@/lib/rows";
-import { getData } from "@/lib/server/auth";
+import { getData } from "@/lib/server/context";
 import { WEB_TYPE } from "@/lib/status";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -72,6 +72,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <span className="size-2 rounded-[3px]" style={{ background: WEB_TYPE[project.type].color }} />
               {WEB_TYPE[project.type].label}
             </span>
+            {project.package && (
+              <span className="inline-flex items-center rounded-full border border-accent/30 bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-fg">
+                Balíček {project.package}
+              </span>
+            )}
           </div>
           <h1 className="text-xl font-semibold tracking-tight text-fg sm:text-2xl">{project.name}</h1>
           <p className="mt-1 text-sm text-fg-2">

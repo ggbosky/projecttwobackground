@@ -39,7 +39,7 @@ import { cn } from "@/lib/cn";
 import { formatCZK, formatDate, formatNumber, formatPercent, formatRelative, isoDate, plural } from "@/lib/format";
 import { memberById } from "@/lib/metrics";
 import { invoiceRows } from "@/lib/rows";
-import { getData } from "@/lib/server/auth";
+import { getData } from "@/lib/server/context";
 import { COMM_TYPE, COMPANY_SIZE, PROJECT_STATUS, TIMELINE } from "@/lib/status";
 import type { CommunicationType, ProjectStatus } from "@/lib/types";
 
@@ -295,6 +295,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                   ? "—"
                   : `${q.budgetMin !== null ? formatCZK(q.budgetMin) : "?"} – ${q.budgetMax !== null ? formatCZK(q.budgetMax) : "?"}`}
               </Info>
+              <Info label="O co mají zájem">{client.interest || "—"}</Info>
               <Info label="Časový horizont">{TIMELINE[q.timeline]}</Info>
               <Info label="Shoda s ideálním klientem">{q.fit ? <Stars value={q.fit} /> : "Nehodnoceno"}</Info>
               <Info label="Konkurence">{q.competitors || "—"}</Info>
@@ -414,13 +415,13 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       <Card className="xl:col-span-3">
         <CardHeader title="Historie komunikace" description="E-maily, hovory, schůzky a interní poznámky" />
         <CardBody>
-          <CommunicationLog clientId={client.id} entries={client.communication} users={ctx.users} meId={me.id} today={today} />
+          <CommunicationLog clientId={client.id} entries={client.communication} users={ctx.users} meId={me?.id ?? ""} today={today} />
         </CardBody>
       </Card>
       <Card className="h-fit xl:col-span-2">
         <CardHeader title="Úkoly a další kroky" />
         <CardBody>
-          <TaskList clientId={client.id} tasks={client.tasks} users={ctx.users} meId={me.id} today={today} />
+          <TaskList clientId={client.id} tasks={client.tasks} users={ctx.users} meId={me?.id ?? ""} today={today} />
         </CardBody>
       </Card>
     </div>

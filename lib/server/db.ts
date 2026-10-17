@@ -2,6 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { EMPTY_DB, normalizeDb } from "@/lib/dbShape";
 import type { Database } from "@/lib/types";
 
 /**
@@ -16,20 +17,7 @@ import type { Database } from "@/lib/types";
 const DATA_DIR = process.env.DATA_DIR?.trim() || path.join(process.cwd(), ".data");
 const DB_FILE = path.join(DATA_DIR, "db.json");
 
-export const EMPTY_DB: Database = {
-  version: 1,
-  users: [],
-  sessions: [],
-  clients: [],
-  projects: [],
-  invoices: [],
-  expenses: [],
-  settings: {
-    targetMonthlyRevenue: 0,
-    targetMargin: 0.3,
-    capacityBuffer: 0.15,
-  },
-};
+export { EMPTY_DB, normalizeDb };
 
 export function newId(): string {
   return randomUUID().replace(/-/g, "").slice(0, 12);
@@ -38,8 +26,7 @@ export function newId(): string {
 export async function readDb(): Promise<Database> {
   try {
     const raw = await fs.readFile(DB_FILE, "utf8");
-    const parsed = JSON.parse(raw) as Partial<Database>;
-    return { ...structuredClone(EMPTY_DB), ...parsed, settings: { ...EMPTY_DB.settings, ...parsed.settings } };
+    return normalizeDb(JSON.parse(raw));
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return structuredClone(EMPTY_DB);
     throw error;

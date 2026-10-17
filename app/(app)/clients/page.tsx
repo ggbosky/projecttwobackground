@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { clientListMetrics } from "@/lib/analysis";
 import { formatCZKCompact } from "@/lib/format";
 import { currentMRR, memberById } from "@/lib/metrics";
-import { getData } from "@/lib/server/auth";
+import { getData } from "@/lib/server/context";
 
 export const metadata: Metadata = { title: "Klienti" };
 

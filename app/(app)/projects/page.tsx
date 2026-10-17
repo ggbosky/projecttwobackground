@@ -8,7 +8,7 @@ import { KpiCard } from "@/components/ui/KpiCard";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { formatCZKCompact, formatPercent } from "@/lib/format";
 import { pipelineSummary, successMetrics } from "@/lib/metrics";
-import { getData } from "@/lib/server/auth";
+import { getData } from "@/lib/server/context";
 
 export const metadata: Metadata = { title: "Projekty" };
 

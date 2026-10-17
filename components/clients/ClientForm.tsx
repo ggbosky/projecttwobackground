@@ -6,6 +6,7 @@ import { useActionState, useState } from "react";
 import { saveClientAction } from "@/app/actions/clients";
 import { Checkbox, Field, FormMessage, FormSection, SelectInput, SubmitButton, TextArea, TextInput } from "@/components/ui/form";
 import { cn } from "@/lib/cn";
+import { BUDGET_BRACKETS, CARE_PACKAGES, INQUIRY_TYPES, WEB_INQUIRY_SOURCE } from "@/lib/agency";
 import { CLIENT_SOURCES, CLIENT_STATUS, COMPANY_SIZE, PRIORITY, TIMELINE } from "@/lib/status";
 import type { Client, ContactPerson, PublicUser } from "@/lib/types";
 
@@ -34,6 +35,8 @@ export function ClientForm({ client, users, meId }: { client?: Client; users: Pu
   const [state, action] = useActionState(saveClientAction, undefined);
   const [contacts, setContacts] = useState<ContactPerson[]>(client?.contacts.length ? client.contacts : [emptyContact()]);
   const [fit, setFit] = useState(client?.qualification.fit ?? 0);
+  const [budgetMin, setBudgetMin] = useState(client?.qualification.budgetMin?.toString() ?? "");
+  const [budgetMax, setBudgetMax] = useState(client?.qualification.budgetMax?.toString() ?? "");
   const c = client;
   const q = c?.qualification;
   const d = c?.digital;
@@ -110,7 +113,7 @@ export function ClientForm({ client, users, meId }: { client?: Client; users: Pu
           <Field label="Zdroj" htmlFor="source">
             <TextInput id="source" name="source" list="sources" defaultValue={c?.source} placeholder="Odkud klient přišel" />
             <datalist id="sources">
-              {CLIENT_SOURCES.map((s) => (
+              {[WEB_INQUIRY_SOURCE, ...CLIENT_SOURCES].map((s) => (
                 <option key={s} value={s} />
               ))}
             </datalist>
@@ -181,11 +184,44 @@ export function ClientForm({ client, users, meId }: { client?: Client; users: Pu
         </FormSection>
 
         <FormSection id="kvalifikace" title="Obchodní kvalifikace" description="Rozpočet, potřeby, rozhodování a konkurence. Z toho se počítá lead score.">
+          <Field label="O co mají zájem" htmlFor="interest" hint="Stejné možnosti jako v poptávkovém formuláři na projectwo.com">
+            <SelectInput
+              id="interest"
+              name="interest"
+              defaultValue={c?.interest ?? ""}
+              options={[{ value: "", label: "— nevybráno —" }, ...INQUIRY_TYPES.map((t) => ({ value: t, label: t }))]}
+            />
+          </Field>
+          <Field label="Orientační rozpočet" htmlFor="bracket-0">
+            <div className="flex flex-wrap gap-1.5">
+              {BUDGET_BRACKETS.map((b, i) => {
+                const active = budgetMin === String(b.min) && budgetMax === (b.max === null ? "" : String(b.max));
+                return (
+                  <button
+                    key={b.label}
+                    id={`bracket-${i}`}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => {
+                      setBudgetMin(String(b.min));
+                      setBudgetMax(b.max === null ? "" : String(b.max));
+                    }}
+                    className={cn(
+                      "h-9 rounded-lg border px-2.5 text-xs transition-colors",
+                      active ? "border-accent/40 bg-accent-soft text-fg" : "border-line text-fg-2 hover:border-line-strong",
+                    )}
+                  >
+                    {b.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
           <Field label="Rozpočet od (Kč)" htmlFor="budgetMin">
-            <TextInput id="budgetMin" name="budgetMin" inputMode="numeric" defaultValue={q?.budgetMin ?? ""} />
+            <TextInput id="budgetMin" name="budgetMin" inputMode="numeric" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} />
           </Field>
           <Field label="Rozpočet do (Kč)" htmlFor="budgetMax">
-            <TextInput id="budgetMax" name="budgetMax" inputMode="numeric" defaultValue={q?.budgetMax ?? ""} />
+            <TextInput id="budgetMax" name="budgetMax" inputMode="numeric" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} />
           </Field>
           <Field label="Časový horizont" htmlFor="timeline">
             <SelectInput id="timeline" name="timeline" defaultValue={q?.timeline ?? ""} options={Object.entries(TIMELINE).map(([value, label]) => ({ value, label }))} />
@@ -268,8 +304,13 @@ export function ClientForm({ client, users, meId }: { client?: Client; users: Pu
           <Field label="Retainer měsíčně (Kč)" htmlFor="retainerMonthly" hint="0 = bez retaineru">
             <TextInput id="retainerMonthly" name="retainerMonthly" inputMode="numeric" defaultValue={c?.retainer?.monthly ?? ""} />
           </Field>
-          <Field label="Rozsah retaineru" htmlFor="retainerScope">
-            <TextInput id="retainerScope" name="retainerScope" defaultValue={c?.retainer?.scope} placeholder="Správa, hosting, x hodin vývoje…" />
+          <Field label="Balíček péče / rozsah" htmlFor="retainerScope" hint="Basic, Standard nebo Plus podle webu – nebo vlastní popis">
+            <TextInput id="retainerScope" name="retainerScope" list="care-packages" defaultValue={c?.retainer?.scope} placeholder="např. Standard – Web, který je stále aktuální" />
+            <datalist id="care-packages">
+              {CARE_PACKAGES.map((p) => (
+                <option key={p.name} value={`${p.name} – ${p.description}`} />
+              ))}
+            </datalist>
           </Field>
           <Field label="Retainer od" htmlFor="retainerSince">
             <TextInput id="retainerSince" name="retainerSince" type="date" defaultValue={c?.retainer?.since} />

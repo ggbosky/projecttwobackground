@@ -1,28 +1,20 @@
 /* ------------------------------------------------------------------ */
-/* Uživatelé a přihlášení                                              */
+/* Tým                                              */
 /* ------------------------------------------------------------------ */
 
+/** Člen týmu (bez přihlašování – aplikace je otevřená) */
 export interface User {
   id: string;
   name: string;
   email: string;
   role: string;
-  passwordHash: string;
   hoursPerWeek: number;
   hourlyCost: number;
   color: string;
   createdAt: string;
 }
 
-/** Uživatel bez citlivých polí – jen tohle smí do klientských komponent */
-export type PublicUser = Omit<User, "passwordHash">;
-
-export interface Session {
-  tokenHash: string;
-  userId: string;
-  createdAt: string;
-  expiresAt: string;
-}
+export type PublicUser = User;
 
 /* ------------------------------------------------------------------ */
 /* Klienti (CRM)                                                       */
@@ -124,6 +116,9 @@ export interface Client {
   qualification: Qualification;
   digital: DigitalProfile;
 
+  /** O co mají zájem (typ poptávky z webu projectwo.com) */
+  interest: string;
+
   billingEmail: string;
   paymentTermsDays: number;
   retainer: Retainer | null;
@@ -155,6 +150,8 @@ export interface Project {
   clientId: string;
   type: WebType;
   status: ProjectStatus;
+  /** Balíček z ceníku webu (Start / Business / Premium / Na míru) */
+  package: string;
   description: string;
   stack: string[];
   price: number;
@@ -215,7 +212,6 @@ export interface Settings {
 export interface Database {
   version: 1;
   users: User[];
-  sessions: Session[];
   clients: Client[];
   projects: Project[];
   invoices: Invoice[];

@@ -40,7 +40,7 @@ import {
   revenueIn,
   successMetrics,
 } from "@/lib/metrics";
-import { getData } from "@/lib/server/auth";
+import { getData } from "@/lib/server/context";
 import { COMM_TYPE } from "@/lib/status";
 import type { PublicUser } from "@/lib/types";
 
@@ -61,8 +61,9 @@ export default async function OverviewPage() {
 
   const empty = ctx.clients.length === 0;
   const setup = [
-    { done: ctx.users.length > 1, label: "Přidejte účty pro kolegy", href: "/team" },
-    { done: ctx.users.every((u) => u.hourlyCost > 0), label: "Nastavte nákladové sazby (pro ziskovost)", href: "/settings" },
+    { done: ctx.users.length > 0, label: "Přidejte sebe a kolegy do týmu", href: "/team" },
+    { done: ctx.clients.some((c) => c.tags.includes("Reference na webu")), label: "Načtěte reference z projectwo.com", href: "/agency" },
+    { done: ctx.users.length > 0 && ctx.users.every((u) => u.hourlyCost > 0), label: "Nastavte nákladové sazby (pro ziskovost)", href: "/team" },
     { done: ctx.clients.length > 0, label: "Přidejte prvního klienta nebo lead", href: "/clients/new" },
     { done: ctx.projects.length > 0, label: "Založte projekt nebo nabídku", href: "/projects/new" },
     { done: ctx.invoices.length > 0, label: "Zaznamenejte první fakturu", href: "/finance#faktury" },
@@ -72,7 +73,7 @@ export default async function OverviewPage() {
 
   // Moje úkoly napříč klienty
   const myTasks = ctx.clients
-    .flatMap((c) => c.tasks.filter((t) => !t.done && t.assigneeId === me.id).map((t) => ({ ...t, client: c })))
+    .flatMap((c) => c.tasks.filter((t) => !t.done && (!me || t.assigneeId === me.id)).map((t) => ({ ...t, client: c })))
     .sort((a, b) => (a.dueDate || "9999").localeCompare(b.dueDate || "9999"))
     .slice(0, 8);
 
@@ -218,7 +219,7 @@ export default async function OverviewPage() {
         </Card>
 
         <Card>
-          <CardHeader title="Moje úkoly" icon={<ListTodo size={15} />} description="Přiřazené tobě napříč klienty" />
+          <CardHeader title={me ? "Moje úkoly" : "Otevřené úkoly"} icon={<ListTodo size={15} />} description={me ? `Přiřazené: ${me.name}` : "Napříč klienty"} />
           <CardBody>
             {myTasks.length === 0 ? (
               <p className="text-xs text-muted">Žádné otevřené úkoly. Úkoly se zakládají v detailu klienta.</p>

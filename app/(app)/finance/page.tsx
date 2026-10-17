@@ -28,7 +28,7 @@ import {
   revenueIn,
 } from "@/lib/metrics";
 import { invoiceRows } from "@/lib/rows";
-import { getData } from "@/lib/server/auth";
+import { getData } from "@/lib/server/context";
 
 export const metadata: Metadata = { title: "Finance" };
 

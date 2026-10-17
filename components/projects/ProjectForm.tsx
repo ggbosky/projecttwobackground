@@ -7,6 +7,7 @@ import { saveProjectAction } from "@/app/actions/projects";
 import { Avatar } from "@/components/ui/Avatar";
 import { Field, FormMessage, FormSection, SelectInput, SubmitButton, TextArea, TextInput } from "@/components/ui/form";
 import { cn } from "@/lib/cn";
+import { WEB_PACKAGES } from "@/lib/agency";
 import { OUTCOME_REASONS_NEGATIVE, OUTCOME_REASONS_POSITIVE, PROJECT_STATUS, PROJECT_STATUS_ORDER, WEB_TYPE, WEB_TYPE_ORDER } from "@/lib/status";
 import type { Project, ProjectStatus, PublicUser } from "@/lib/types";
 
@@ -63,6 +64,19 @@ export function ProjectForm({
           </Field>
           <Field label="Typ webu" htmlFor="type">
             <SelectInput id="type" name="type" defaultValue={p?.type ?? "presentation"} options={WEB_TYPE_ORDER.map((t) => ({ value: t, label: WEB_TYPE[t].label }))} />
+          </Field>
+          <Field label="Balíček" htmlFor="package" hint="Podle ceníku na projectwo.com">
+            <SelectInput
+              id="package"
+              name="package"
+              defaultValue={p?.package ?? ""}
+              options={[
+                { value: "", label: "— neurčeno —" },
+                ...WEB_PACKAGES.map((w) => ({ value: w.name, label: `${w.name} – ${w.description}` })),
+                { value: "Péče", label: "Péče o web (samostatná zakázka)" },
+                { value: "Na míru", label: "Na míru" },
+              ]}
+            />
           </Field>
           <Field label="Stav" htmlFor="status">
             <SelectInput

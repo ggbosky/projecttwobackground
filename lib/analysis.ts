@@ -232,7 +232,8 @@ export function analyzeClient(ctx: DataContext, client: Client): ClientAnalysis 
   let lead: ClientAnalysis["lead"] = null;
   if (client.status === "lead") {
     const q = client.qualification;
-    const avg = averageProjectPrice(ctx) || 150_000;
+    // Bez historie: střed rozpočtů z poptávkového formuláře na webu (25–50 tis.)
+    const avg = averageProjectPrice(ctx) || 30_000;
     const budget = q.budgetMax ?? q.budgetMin;
     const factors: Factor[] = [
       {

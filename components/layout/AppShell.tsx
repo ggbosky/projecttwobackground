@@ -1,10 +1,10 @@
 "use client";
 
-import { Bell, Command, LogOut, Menu, Moon, Plus, Search, Sun, X } from "lucide-react";
+import { Bell, Building2, Command, Menu, Moon, Plus, Search, Sun, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
-import { logoutAction } from "@/app/actions/auth";
+import { useEffect, useState, useTransition, type ReactNode } from "react";
+import { setMeAction } from "@/app/actions/team";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/cn";
 import { formatCZKCompact } from "@/lib/format";
@@ -63,7 +63,17 @@ function ThemeSwitch() {
   );
 }
 
-function SidebarContent({ stats, user, onNavigate }: { stats: ShellStats; user: PublicUser; onNavigate?: () => void }) {
+function SidebarContent({
+  stats,
+  user,
+  members,
+  onNavigate,
+}: {
+  stats: ShellStats;
+  user: PublicUser | null;
+  members: PublicUser[];
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const counts: Record<string, number | undefined> = {
     "/projects": stats.activeProjects,
@@ -125,31 +135,51 @@ function SidebarContent({ stats, user, onNavigate }: { stats: ShellStats; user: 
           </Link>
         )}
         <ThemeSwitch />
-        <div className="flex items-center gap-2 px-1">
-          <Link href="/settings" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg p-1 hover:bg-surface-2">
-            <Avatar name={user.name} color={user.color} size="sm" />
-            <span className="min-w-0 leading-tight">
-              <span className="block truncate text-xs font-medium text-fg">{user.name}</span>
-              <span className="block truncate text-[11px] text-muted">{user.email}</span>
-            </span>
-          </Link>
-          <Link
-            href="/settings"
-            onClick={onNavigate}
-            className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-fg"
-            aria-label={SETTINGS_NAV.label}
-            title={SETTINGS_NAV.label}
-          >
-            <SettingsIcon size={15} />
-          </Link>
-          <form action={logoutAction}>
-            <button type="submit" className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-fg" aria-label="Odhlásit se" title="Odhlásit se">
-              <LogOut size={15} />
-            </button>
-          </form>
-        </div>
+        <MemberSwitch user={user} members={members} onNavigate={onNavigate} />
+        <Link
+          href="/settings"
+          onClick={onNavigate}
+          className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-muted hover:bg-surface-2 hover:text-fg"
+        >
+          <SettingsIcon size={14} /> {SETTINGS_NAV.label}
+        </Link>
       </div>
     </div>
+  );
+}
+
+function MemberSwitch({ user, members, onNavigate }: { user: PublicUser | null; members: PublicUser[]; onNavigate?: () => void }) {
+  const [pending, start] = useTransition();
+  if (!members.length) {
+    return (
+      <Link
+        href="/team"
+        onClick={onNavigate}
+        className="flex items-center gap-2 rounded-lg border border-dashed border-line-strong px-2.5 py-2 text-xs text-fg-2 hover:border-accent hover:text-accent"
+      >
+        <UserPlus size={14} /> Přidejte členy týmu
+      </Link>
+    );
+  }
+  return (
+    <label className={cn("flex items-center gap-2.5 rounded-lg px-1 py-1", pending && "opacity-60")}>
+      {user ? <Avatar name={user.name} color={user.color} size="sm" /> : <Building2 size={16} className="text-muted" />}
+      <span className="min-w-0 flex-1 leading-tight">
+        <span className="block text-[10px] text-muted">Pracuji jako</span>
+        <select
+          value={user?.id ?? ""}
+          onChange={(e) => start(() => setMeAction(e.target.value))}
+          className="-ml-0.5 w-full cursor-pointer truncate bg-transparent text-xs font-medium text-fg focus:outline-none"
+          aria-label="Pracuji jako"
+        >
+          {members.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
+      </span>
+    </label>
   );
 }
 
@@ -157,11 +187,13 @@ export function AppShell({
   children,
   stats,
   user,
+  members,
   searchItems,
 }: {
   children: ReactNode;
   stats: ShellStats;
-  user: PublicUser;
+  user: PublicUser | null;
+  members: PublicUser[];
   searchItems: SearchItem[];
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -192,7 +224,7 @@ export function AppShell({
   return (
     <div className="min-h-dvh">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-line bg-bg lg:block">
-        <SidebarContent stats={stats} user={user} />
+        <SidebarContent stats={stats} user={user} members={members} />
       </aside>
 
       <div className={cn("fixed inset-0 z-50 lg:hidden", mobileOpen ? "pointer-events-auto" : "pointer-events-none")} aria-hidden={!mobileOpen}>
@@ -213,7 +245,7 @@ export function AppShell({
           >
             <X size={18} />
           </button>
-          <SidebarContent stats={stats} user={user} onNavigate={() => setMobileOpen(false)} />
+          <SidebarContent stats={stats} user={user} members={members} onNavigate={() => setMobileOpen(false)} />
         </aside>
       </div>
 
@@ -253,9 +285,11 @@ export function AppShell({
                 <Bell size={17} />
                 {alerts > 0 && <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-red-500 ring-2 ring-bg" />}
               </Link>
-              <Link href="/settings" className="ml-1 hidden sm:block" aria-label="Můj profil">
-                <Avatar name={user.name} color={user.color} size="sm" />
-              </Link>
+              {user && (
+                <Link href="/team" className="ml-1 hidden sm:block" aria-label={`Pracuji jako ${user.name}`} title={`Pracuji jako ${user.name}`}>
+                  <Avatar name={user.name} color={user.color} size="sm" />
+                </Link>
+              )}
             </div>
           </div>
         </header>

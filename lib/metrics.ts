@@ -294,7 +294,7 @@ export function avgMonthlyHoursPerProject(ctx: DataContext, type?: WebType): num
 }
 
 /** Výchozí odhad, dokud nemáte dokončené projekty (h / měsíc na jeden web) */
-export const DEFAULT_MONTHLY_HOURS = 80;
+export const DEFAULT_MONTHLY_HOURS = 60;
 
 export function avgMonthlyHoursByType(ctx: DataContext): Record<WebType, number> {
   const overall = avgMonthlyHoursPerProject(ctx) ?? DEFAULT_MONTHLY_HOURS;

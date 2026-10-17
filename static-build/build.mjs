@@ -33,7 +33,7 @@ const result = await build({
   define: { "process.env.NODE_ENV": '"production"' },
   alias: {
     "@/lib/server/db": path.join(DIR, "shims/db.ts"),
-    "@/lib/server/auth": path.join(DIR, "shims/auth.ts"),
+    "@/lib/server/context": path.join(DIR, "shims/context.ts"),
     "@": REPO,
     "next/link": path.join(DIR, "shims/link.tsx"),
     "next/navigation": path.join(DIR, "shims/navigation.ts"),
