@@ -91,7 +91,7 @@ function SidebarContent({
           onClick={onNavigate}
           className="flex h-8 items-center justify-center gap-1.5 rounded-lg bg-accent text-xs font-medium text-accent-fg shadow-card transition-all hover:brightness-110"
         >
-          <Plus size={14} /> Nový klient
+          <Plus size={14} /> Přidat klienta
         </Link>
       </div>
       <nav className="mt-4 flex-1 space-y-0.5 px-2" aria-label="Hlavní navigace">

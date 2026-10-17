@@ -66,7 +66,7 @@ npm run build && npm start       # produkce
 | Stránka | Co umí |
 |---|---|
 | **Přehled** | KPI, rozjezdový checklist, „Vyžaduje pozornost" (faktury po splatnosti, klienti bez kontaktu, úkoly po termínu), moje úkoly, poslední komunikace, graf příjmů, vytížení týmu, běžící projekty |
-| **Klienti (CRM)** | Přidávání a úpravy klientů, tabulka nebo karty, filtry (stav, odvětví, owner, „vyžaduje pozornost"), fulltext, řazení podle skóre/obratu/kontaktu |
+| **Klienti (CRM)** | **Přidat hotového klienta**: co jsme dělali a kolik jsme dostali (jednorázově, měsíční paušál nebo obojí), uloží se klient + hotový projekt + platby. Leady přes „Jen potenciální klient“. Úpravy klientů, tabulka nebo karty, filtry (stav, odvětví, owner, „vyžaduje pozornost"), fulltext, řazení podle skóre/obratu/kontaktu |
 | **Detail klienta** | 4 záložky: **Analýza**, **Profil**, **Komunikace & úkoly**, **Projekty & faktury** (popsány níže) |
 | **Projekty** | Přidávání a úpravy zakázek (nabídka → realizace → předání), tým a hodiny, výsledek, důvody, hodnocení; tabulka nebo Kanban s filtry |
 | **Finance** | Faktury (vystavení, úhrada, po splatnosti), náklady, obrat, MRR/ARR, pipeline & cashflow, profitabilita projektů, koláč podle typů webů |

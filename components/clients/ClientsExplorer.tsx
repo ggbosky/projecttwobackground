@@ -104,7 +104,7 @@ export function ClientsExplorer({ rows, owners }: { rows: ClientRow[]; owners: {
         <EmptyState
           icon={Users}
           title="Zatím žádní klienti"
-          description="Přidejte prvního klienta nebo lead. U každého můžete vést kontakty, kvalifikaci, komunikaci, úkoly, projekty a faktury – analýza se počítá automaticky."
+          description="Přidejte klienty, pro které už máte hotovo: co jste dělali a kolik jste za to dostali. Analýza a finance se spočítají automaticky."
           action={
             <Link href="/clients/new" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3 text-sm font-medium text-accent-fg shadow-card hover:brightness-110">
               <Plus size={15} /> Přidat prvního klienta

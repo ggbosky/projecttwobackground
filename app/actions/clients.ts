@@ -6,13 +6,15 @@ import { currentMemberId } from "@/lib/server/context";
 import { newId, updateDb } from "@/lib/server/db";
 import { clamp, date, json, list, num, numOrNull, oneOf, str, text } from "@/lib/server/form";
 import { REFERENCES } from "@/lib/agency";
-import type { ActionState, Client, ClientStatus, CommunicationType, CompanySize, ContactPerson, Priority, Timeline } from "@/lib/types";
+import type { ActionState, Client, ClientStatus, CommunicationType, CompanySize, ContactPerson, Database, Invoice, Priority, Project, Timeline, WebType } from "@/lib/types";
 
 const STATUSES: ClientStatus[] = ["lead", "active", "former"];
 const PRIORITIES: Priority[] = ["A", "B", "C"];
 const SIZES: CompanySize[] = ["", "1", "2-10", "11-50", "51-200", "200+"];
 const TIMELINES: Timeline[] = ["", "asap", "1-3m", "3-6m", "6m+"];
 const COMM_TYPES: CommunicationType[] = ["email", "call", "meeting", "note"];
+const WEB_TYPES: WebType[] = ["eshop", "presentation", "webflow", "custom"];
+const PAY_MODES = ["once", "monthly", "both"] as const;
 
 function done() {
   revalidatePath("/", "layout");
@@ -269,4 +271,169 @@ export async function importReferencesAction(keys: string[]): Promise<{ added: n
   });
   done();
   return { added };
+}
+
+/* ---------------- Hotový klient (klient + hotová zakázka + platby) ---------------- */
+
+function addDays(day: string, days: number): string {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function addMonths(day: string, months: number): string {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCMonth(d.getUTCMonth() + months);
+  return d.toISOString().slice(0, 10);
+}
+
+function pushInvoice(db: Database, inv: Omit<Invoice, "id" | "number" | "createdAt">) {
+  const year = inv.issueDate.slice(0, 4);
+  const seq = db.invoices.filter((i) => i.number.startsWith(`FV-${year}-`)).length + 1;
+  db.invoices.push({ id: newId(), number: `FV-${year}-${String(seq).padStart(4, "0")}`, createdAt: new Date().toISOString(), ...inv });
+}
+
+/**
+ * Rychlé přidání klienta, pro kterého už máme hotovo: uloží klienta,
+ * dokončený projekt s cenou a platbu (jednorázovou a/nebo měsíční paušál).
+ */
+export async function addFinishedClientAction(_: ActionState, fd: FormData): Promise<ActionState> {
+  const meId = await currentMemberId();
+  const company = str(fd, "company", 160);
+  if (!company) return { error: "Vyplňte jméno klienta nebo firmy." };
+
+  const mode = oneOf(fd, "payMode", PAY_MODES, "once");
+  const once = mode !== "monthly";
+  const monthly = mode !== "once";
+  const amount = Math.max(0, num(fd, "amount"));
+  const monthlyAmount = Math.max(0, num(fd, "monthlyAmount"));
+  if (once && amount <= 0) return { error: "Zadejte, kolik jsme za zakázku dostali." };
+  if (monthly && monthlyAmount <= 0) return { error: "Zadejte, kolik platí měsíčně." };
+
+  const now = new Date().toISOString();
+  const today = now.slice(0, 10);
+  const finished = date(fd, "finishedDate") || today;
+  const paid = str(fd, "paidState", 10) !== "pending";
+  const monthlySince = date(fd, "monthlySince") || finished;
+  const monthsPaid = clamp(Math.round(num(fd, "monthsPaid")), 0, 120);
+  const projectName = str(fd, "projectName", 200) || "Web";
+  const rating = clamp(Math.round(num(fd, "rating")), 0, 5);
+  const website = str(fd, "website", 300);
+  const contactName = str(fd, "contactName", 120);
+  const contactEmail = str(fd, "contactEmail", 160);
+  const contactPhone = str(fd, "contactPhone", 60);
+  const terms = 14;
+
+  const clientId = await updateDb((db) => {
+    const client: Client = {
+      id: newId(),
+      createdAt: now,
+      updatedAt: now,
+      createdBy: meId,
+      company,
+      ico: str(fd, "ico", 20),
+      dic: "",
+      industry: str(fd, "industry", 120),
+      size: "",
+      annualRevenue: null,
+      website,
+      street: "",
+      city: str(fd, "city", 120),
+      zip: "",
+      country: "Česko",
+      status: oneOf(fd, "status", ["active", "former"] as const, "active"),
+      source: str(fd, "source", 120),
+      ownerId: meId,
+      priority: "B",
+      tags: [],
+      since: once ? date(fd, "startDate") || finished : monthlySince,
+      contacts:
+        contactName || contactEmail || contactPhone
+          ? [{ id: newId(), name: contactName, role: "", email: contactEmail, phone: contactPhone, linkedin: "", isDecisionMaker: true, note: "" }]
+          : [],
+      qualification: { budgetMin: null, budgetMax: null, needs: "", painPoints: "", decisionProcess: "", timeline: "", fit: 0, competitors: "", whyUs: "" },
+      digital: { currentWebsite: website, platform: "", websiteAge: "", instagram: "", facebook: "", linkedin: "", goals: "", kpis: "" },
+      interest: once ? "Nový web" : "Péče o web",
+      billingEmail: contactEmail,
+      paymentTermsDays: terms,
+      retainer: monthly ? { monthly: monthlyAmount, since: monthlySince, until: "", scope: str(fd, "careScope", 500) } : null,
+      personality: "",
+      notes: text(fd, "notes"),
+      communication: [],
+      tasks: [],
+    };
+    const czk = (n: number) => `${n.toLocaleString("cs-CZ")} Kč`;
+    const summary = [
+      once && `Zakázka dokončena: ${projectName} – ${czk(amount)}${paid ? "" : " (čeká na zaplacení)"}`,
+      monthly && `Měsíční paušál ${czk(monthlyAmount)} od ${monthlySince.split("-").reverse().join(". ")}`,
+    ]
+      .filter(Boolean)
+      .join(". ");
+    client.communication.push({ id: newId(), date: once ? finished : monthlySince, type: "note", authorId: meId, summary, nextStep: "" });
+    db.clients.push(client);
+
+    if (once) {
+      const project: Project = {
+        id: newId(),
+        createdAt: now,
+        updatedAt: now,
+        name: projectName,
+        clientId: client.id,
+        type: oneOf(fd, "type", WEB_TYPES, "presentation"),
+        status: "completed",
+        package: str(fd, "package", 40),
+        description: text(fd, "description"),
+        stack: list(fd, "stack"),
+        price: amount,
+        probability: 1,
+        startDate: date(fd, "startDate"),
+        plannedEndDate: finished,
+        actualEndDate: finished,
+        estimatedHours: 0,
+        actualHours: Math.max(0, num(fd, "hours")),
+        externalCosts: 0,
+        progress: 100,
+        team: [],
+        liveUrl: website,
+        outcomeReasons: [],
+        rating: rating || null,
+        feedback: text(fd, "feedback"),
+        holdReason: "",
+      };
+      db.projects.push(project);
+      pushInvoice(db, {
+        clientId: client.id,
+        projectId: project.id,
+        kind: "project",
+        label: projectName,
+        issueDate: finished,
+        dueDate: addDays(finished, terms),
+        amount,
+        paid,
+        paidDate: paid ? finished : "",
+      });
+    }
+
+    if (monthly) {
+      // Už zaplacené měsíce paušálu – aby byly vidět v obratu
+      for (let i = 0; i < monthsPaid; i++) {
+        const issueDate = addMonths(monthlySince, i);
+        if (issueDate > today) break;
+        pushInvoice(db, {
+          clientId: client.id,
+          projectId: "",
+          kind: "retainer",
+          label: `Paušál ${issueDate.slice(5, 7)}/${issueDate.slice(0, 4)}`,
+          issueDate,
+          dueDate: addDays(issueDate, terms),
+          amount: monthlyAmount,
+          paid: true,
+          paidDate: issueDate,
+        });
+      }
+    }
+    return client.id;
+  });
+  done();
+  redirect(`/clients/${clientId}`);
 }

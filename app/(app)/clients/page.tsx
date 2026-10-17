@@ -48,7 +48,7 @@ export default async function ClientsPage() {
         description="Databáze klientů a leadů. U každého detailní profil, kvalifikace, komunikace, úkoly, projekty, faktury a automatická analýza."
         actions={
           <Link href="/clients/new" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3 text-sm font-medium text-accent-fg shadow-card hover:brightness-110">
-            <Plus size={15} /> Nový klient
+            <Plus size={15} /> Přidat klienta
           </Link>
         }
       />

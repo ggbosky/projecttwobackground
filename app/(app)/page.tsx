@@ -64,7 +64,7 @@ export default async function OverviewPage() {
     { done: ctx.users.length > 0, label: "Přidejte sebe a kolegy do týmu", href: "/team" },
     { done: ctx.clients.some((c) => c.tags.includes("Reference na webu")), label: "Načtěte reference z projectwo.com", href: "/agency" },
     { done: ctx.users.length > 0 && ctx.users.every((u) => u.hourlyCost > 0), label: "Nastavte nákladové sazby (pro ziskovost)", href: "/team" },
-    { done: ctx.clients.length > 0, label: "Přidejte prvního klienta nebo lead", href: "/clients/new" },
+    { done: ctx.clients.length > 0, label: "Přidejte hotové klienty (co jsme dělali a kolik jsme dostali)", href: "/clients/new" },
     { done: ctx.projects.length > 0, label: "Založte projekt nebo nabídku", href: "/projects/new" },
     { done: ctx.invoices.length > 0, label: "Zaznamenejte první fakturu", href: "/finance#faktury" },
     { done: ctx.settings.targetMonthlyRevenue > 0, label: "Nastavte měsíční cíl obratu", href: "/settings" },
