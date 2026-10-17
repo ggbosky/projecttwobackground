@@ -4,6 +4,7 @@ import {
   Check,
   CircleAlert,
   CircleDollarSign,
+  Clock,
   Gauge,
   ListTodo,
   Plus,
@@ -12,6 +13,7 @@ import {
   Target,
   TriangleAlert,
   Trophy,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -24,7 +26,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Progress } from "@/components/ui/Progress";
 import { analyzeClient } from "@/lib/analysis";
 import { cn } from "@/lib/cn";
-import { formatCZK, formatCZKCompact, formatDate, formatDateShort, formatMonthLong, formatNumber, formatPercent, formatRelative, isoDate, parseDate } from "@/lib/format";
+import { formatCZK, formatCZKCompact, formatDate, formatDateShort, formatMonthLong, formatNumber, formatPercent, formatRelative, isoDate, parseDate, plural } from "@/lib/format";
 import {
   addMonths,
   averageProjectPrice,
@@ -33,6 +35,7 @@ import {
   currentMonth,
   currentMRR,
   invoiceStatus,
+  isRetainerActive,
   memberLoad,
   monthlySeries,
   pipelineSummary,
@@ -57,7 +60,29 @@ export default async function OverviewPage() {
   const capNow = capacityForMonth(ctx, month);
   const capNext = capacityForMonth(ctx, addMonths(month, 1));
   const last = revenueIn(ctx, lastMonth);
-  const prev = revenueIn(ctx, addMonths(month, -2));
+  const thisMonth = revenueIn(ctx, month);
+  const year = month.slice(0, 4);
+  const yearRevenue = revenueIn(ctx, year);
+  const monthsThisYear = Number(month.slice(5, 7));
+  const prevYearSoFar = ctx.invoices
+    .filter((i) => i.issueDate.startsWith(String(Number(year) - 1)) && i.issueDate.slice(5, 10) <= today.slice(5, 10))
+    .reduce((s, i) => s + i.amount, 0);
+  // Procenta jen tam, kde dávají smysl (ne +4 000 % z malého základu)
+  const change = (now: number, before: number) => (before > 0 && Math.abs(now / before - 1) <= 5 ? now / before - 1 : undefined);
+  const monthDelta = change(thisMonth, last);
+  const yearDelta = change(yearRevenue, prevYearSoFar);
+  const totalRevenue = ctx.invoices.reduce((s, i) => s + i.amount, 0);
+  const totalPaid = ctx.invoices.filter((i) => i.paid).reduce((s, i) => s + i.amount, 0);
+  const olderRevenue = totalRevenue - series.reduce((s, r) => s + r.revenue, 0);
+  let running = olderRevenue;
+  const cumulative = series.map((r) => ({ cumulative: (running += r.revenue) }));
+  const retainerClients = ctx.clients.filter((c) => isRetainerActive(c, ctx.today)).length;
+  const activeClients = ctx.clients.filter((c) => c.status === "active").length;
+  const completed = ctx.projects.filter((p) => p.status === "completed");
+  const completedValue = completed.reduce((s, p) => s + p.price, 0);
+  const withHours = completed.filter((p) => p.actualHours > 0);
+  const hoursTotal = withHours.reduce((s, p) => s + p.actualHours, 0);
+  const hourly = hoursTotal > 0 ? Math.round(withHours.reduce((s, p) => s + p.price, 0) / hoursTotal) : null;
 
   const empty = ctx.clients.length === 0;
   const setup = [
@@ -103,7 +128,6 @@ export default async function OverviewPage() {
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 6);
 
-  const pct = (v: number | null) => (v === null ? "—" : formatPercent(v));
 
   return (
     <div className="animate-in">
@@ -155,37 +179,54 @@ export default async function OverviewPage() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label={`Obrat · ${formatMonthLong(lastMonth)}`}
-          value={formatCZK(last)}
+          label="Obrat celkem"
+          value={formatCZK(totalRevenue)}
           icon={<Banknote size={15} />}
-          delta={prev ? last / prev - 1 : undefined}
-          deltaLabel={prev ? "vs. předchozí měsíc" : `tento měsíc ${formatCZKCompact(revenueIn(ctx, month))}`}
+          hint={`zaplaceno ${formatCZKCompact(totalPaid)} · ${plural(ctx.invoices.length, "platba", "platby", "plateb")}`}
         >
-          {series.some((s) => s.revenue > 0) && <Sparkline id="rev" data={series as unknown as Record<string, number>[]} dataKey="revenue" />}
-        </KpiCard>
-        <KpiCard label="MRR (retainery)" value={formatCZK(mrr)} icon={<Repeat size={15} />} hint={`ARR ${formatCZKCompact(mrr * 12)}`}>
-          {mrr > 0 && <Sparkline id="mrr" data={series as unknown as Record<string, number>[]} dataKey="mrr" color="var(--series-2)" />}
-        </KpiCard>
-        <KpiCard label="Pipeline (zbývá vyfakturovat)" value={formatCZK(pipeline.toInvoice)} icon={<Target size={15} />} hint={`z ${formatCZKCompact(pipeline.contracted)} nasmlouváno`}>
-          {pipeline.contracted > 0 && (
-            <div className="mt-3.5">
-              <Progress value={pipeline.invoicedActive} max={pipeline.contracted} label="Vyfakturováno" />
-            </div>
-          )}
+          {totalRevenue > 0 && <Sparkline id="cum" data={cumulative} dataKey="cumulative" />}
         </KpiCard>
         <KpiCard
-          label="Pohledávky"
-          value={formatCZK(rec.pending + rec.overdue)}
-          icon={<CircleDollarSign size={15} />}
-          hint={<span className={rec.overdue ? "text-red-600 dark:text-red-400" : undefined}>{formatCZKCompact(rec.overdue)} po splatnosti</span>}
+          label={`Obrat · ${formatMonthLong(month)}`}
+          value={formatCZK(thisMonth)}
+          icon={<CalendarClock size={15} />}
+          delta={monthDelta}
+          deltaLabel={monthDelta !== undefined ? `vs. ${formatMonthLong(lastMonth)}` : `${formatMonthLong(lastMonth)}: ${formatCZKCompact(last)}`}
+        >
+          {series.some((s) => s.revenue > 0) && <Sparkline id="rev" data={series as unknown as Record<string, number>[]} dataKey="revenue" color="var(--series-3)" />}
+        </KpiCard>
+        <KpiCard
+          label={`Obrat · rok ${year}`}
+          value={formatCZK(yearRevenue)}
+          icon={<Target size={15} />}
+          delta={yearDelta}
+          deltaLabel={yearDelta !== undefined ? "vs. stejné období loni" : `průměr ${formatCZKCompact(yearRevenue / monthsThisYear)} / měsíc`}
         />
+        <KpiCard label="MRR (měsíční paušály)" value={formatCZK(mrr)} icon={<Repeat size={15} />} hint={`ARR ${formatCZKCompact(mrr * 12)} · ${plural(retainerClients, "klient", "klienti", "klientů")}`}>
+          {mrr > 0 && <Sparkline id="mrr" data={series as unknown as Record<string, number>[]} dataKey="mrr" color="var(--series-2)" />}
+        </KpiCard>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <MiniStat
+          icon={<CircleDollarSign size={14} />}
+          label={rec.overdue ? `Čeká na zaplacení · ${formatCZKCompact(rec.overdue)} po splatnosti` : "Čeká na zaplacení"}
+          value={formatCZK(rec.pending + rec.overdue)}
+          tone={rec.overdue ? "bad" : undefined}
+          href="/finance#faktury"
+        />
+        <MiniStat icon={<Check size={14} />} label="Hotové zakázky" value={`${completed.length} · ${formatCZKCompact(completedValue)}`} href="/projects" />
+        <MiniStat icon={<Users size={14} />} label="Klienti (aktivní / celkem)" value={`${activeClients} / ${ctx.clients.length}`} href="/clients" />
         <MiniStat icon={<CircleDollarSign size={14} />} label="Průměrná cena webu" value={formatCZKCompact(averageProjectPrice(ctx))} />
-        <MiniStat icon={<Trophy size={14} />} label="Win rate nabídek" value={pct(success.winRate)} />
-        <MiniStat icon={<Star size={14} />} label="Hodnocení klientů" value={success.avgRating === null ? "—" : `${formatNumber(success.avgRating, 1)} / 5`} />
-        <MiniStat icon={<Gauge size={14} />} label="Volné sloty (tento / příští měs.)" value={ctx.users.length ? `${capNow.slots} / ${capNext.slots} weby` : "—"} />
+        <MiniStat icon={<Star size={14} />} label="Hodnocení klientů" value={success.avgRating === null ? "—" : `${formatNumber(success.avgRating, 1)} / 5`} href="/success" />
+        <MiniStat icon={<Clock size={14} />} label="Výdělek na hodinu" value={hourly === null ? "— (zadejte hodiny)" : `${formatCZK(hourly)} / h`} />
+        <MiniStat
+          icon={<Trophy size={14} />}
+          label="Rozpracováno + nabídky"
+          value={`${formatCZKCompact(pipeline.toInvoice)} + ${formatCZKCompact(pipeline.proposalValue)}`}
+          href="/projects"
+        />
+        <MiniStat icon={<Gauge size={14} />} label="Volné sloty (tento / příští měs.)" value={ctx.users.length ? `${capNow.slots} / ${capNext.slots} weby` : "—"} href="/team" />
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
@@ -384,14 +425,22 @@ export default async function OverviewPage() {
   );
 }
 
-function MiniStat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 shadow-card">
-      <span className="rounded-md bg-accent-soft p-1.5 text-accent">{icon}</span>
+function MiniStat({ icon, label, value, href, tone }: { icon: ReactNode; label: string; value: string; href?: string; tone?: "bad" }) {
+  const body = (
+    <>
+      <span className={cn("rounded-md p-1.5", tone === "bad" ? "bg-red-500/10 text-red-600 dark:text-red-400" : "bg-accent-soft text-accent")}>{icon}</span>
       <div className="min-w-0">
         <p className="truncate text-[11px] text-muted">{label}</p>
-        <p className="tabular truncate text-sm font-semibold text-fg">{value}</p>
+        <p className={cn("tabular truncate text-sm font-semibold", tone === "bad" ? "text-red-600 dark:text-red-400" : "text-fg")}>{value}</p>
       </div>
-    </div>
+    </>
+  );
+  const cls = "flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 shadow-card";
+  return href ? (
+    <Link href={href} className={cn(cls, "transition-colors hover:border-line-strong")}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cls}>{body}</div>
   );
 }
