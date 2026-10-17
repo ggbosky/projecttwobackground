@@ -1,6 +1,6 @@
 /**
  * Sestaví verzi aplikace pro GitHub Pages: jeden soubor index.html v kořeni repozitáře.
- * Serverové části (úložiště, přihlášení) jsou nahrazené verzemi z ./shims,
+ * Serverové části (úložiště, aktuální člen týmu) jsou nahrazené verzemi z ./shims,
  * které ukládají data do localStorage prohlížeče.
  *
  * Spuštění: npm run build:pages
@@ -51,6 +51,8 @@ fs.rmSync(OUT_CSS);
 const icon = encodeURIComponent(fs.readFileSync(path.join(REPO, "app/icon.svg"), "utf8"));
 const themeInit = `(function(){try{var t=localStorage.getItem('p2-theme');var d=t==='dark'||((!t||t==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
 
+const buildId = Date.now().toString(36);
+
 const html = `<!doctype html>
 <html lang="cs">
 <head>
@@ -67,7 +69,7 @@ body{margin:0}
 ${css}
 .font-mono{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
 </style>
-<script>${themeInit}</script>
+<script>window.__P2_BUILD__=${JSON.stringify(buildId)};${themeInit}</script>
 </head>
 <body class="font-sans">
 <div id="root"></div>
@@ -77,5 +79,6 @@ ${css}
 `;
 
 fs.writeFileSync(path.join(REPO, "index.html"), html);
+fs.writeFileSync(path.join(REPO, "version.json"), JSON.stringify({ build: buildId }) + "\n");
 fs.writeFileSync(path.join(REPO, ".nojekyll"), "");
 console.log(`index.html: ${(Buffer.byteLength(html) / 1024).toFixed(0)} kB`);

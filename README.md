@@ -11,7 +11,7 @@ Na **https://ggbosky.github.io/projecttwobackground/** běží verze aplikace, k
 - Aplikace se **otevře rovnou, bez přihlašování**.
 - **Paměť:** vše, co zadáte, se automaticky ukládá do prohlížeče (localStorage). Aplikace požádá prohlížeč o trvalé úložiště a každý den si sama uloží zálohu (posledních 14 dní, obnovíte ji v horní liště přes *Denní zálohy*).
 - Data jsou **jen v prohlížeči** daného člověka. Kolegům je předáte tlačítky **Stáhnout zálohu / Nahrát ze souboru** v horní liště. Stažený soubor je zároveň nejbezpečnější záloha.
-- Po úpravě kódu verzi pro Pages přegenerujete příkazem `npm run build:pages` a pushnete.
+- Po úpravě kódu verzi pro Pages přegenerujete příkazem `npm run build:pages` a pushnete. Otevřená aplikace si novou verzi načte sama (kontroluje `version.json`).
 - Pro společná data v reálném čase spusťte serverovou verzi (níže).
 
 ## Data zůstávají u vás

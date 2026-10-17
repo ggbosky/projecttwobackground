@@ -214,6 +214,31 @@ function DataBar() {
   );
 }
 
+/**
+ * GitHub Pages posílá index.html s cache na 10 minut, takže prohlížeč může ukazovat starou verzi.
+ * Při otevření a návratu na záložku se podíváme na version.json a případně načteme novou verzi.
+ */
+function checkForUpdate() {
+  const current = (window as unknown as { __P2_BUILD__?: string }).__P2_BUILD__;
+  if (!current) return;
+  fetch(`version.json?t=${Date.now()}`, { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((v: { build?: string } | null) => {
+      if (!v?.build || v.build === current) return;
+      try {
+        // Jen jeden pokus na každou novou verzi, ať se stránka nezacyklí, než CDN dožene version.json
+        if (sessionStorage.getItem("p2-reload-to") === v.build) return;
+        sessionStorage.setItem("p2-reload-to", v.build);
+      } catch {}
+      location.replace(`${location.pathname}?v=${v.build}`);
+    })
+    .catch(() => {});
+}
+
+if (location.search.includes("v=")) history.replaceState(null, "", location.pathname);
+checkForUpdate();
+document.addEventListener("visibilitychange", () => document.visibilityState === "visible" && checkForUpdate());
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider>
